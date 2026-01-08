@@ -6,9 +6,12 @@ pre-commit:
     spotless-apply:
       run: ./gradlew spotlessApply --quiet
       stage_fixed: true  # Re-stage files after formatting
+    test:
+      run: ./gradlew test --quiet
+      glob: "*.{java,gradle,properties}"
     build:
-      run: ./gradlew build --quiet
-      glob: "*.{java,gradle,properties}"  # Run when source files change
+      run: ./gradlew build -x test --quiet
+      glob: "*.{java,gradle,properties}"
 
 pre-push:
   commands:
