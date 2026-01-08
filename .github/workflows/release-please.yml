@@ -49,21 +49,33 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Read gradle.properties
+        id: gradle-props
+        run: |
+          # Read publishing properties from gradle.properties
+          get_prop() { grep "^$1=" gradle.properties | cut -d'=' -f2; }
+
+          echo "mod_name=$(get_prop mod_name)" >> $GITHUB_OUTPUT
+          echo "minecraft_version=$(get_prop minecraft_version)" >> $GITHUB_OUTPUT
+          echo "java_version=$(get_prop java_version)" >> $GITHUB_OUTPUT
+          echo "mod_loaders=$(get_prop mod_loaders)" >> $GITHUB_OUTPUT
+          echo "curseforge_project_id=$(get_prop curseforge_project_id)" >> $GITHUB_OUTPUT
+          echo "curseforge_ae2_id=$(get_prop curseforge_ae2_id)" >> $GITHUB_OUTPUT
+          echo "modrinth_project_id=$(get_prop modrinth_project_id)" >> $GITHUB_OUTPUT
+          echo "modrinth_ae2_id=$(get_prop modrinth_ae2_id)" >> $GITHUB_OUTPUT
+
       - name: Build with Gradle
         run: ./gradlew build
-
-      - name: List build artifacts
-        run: ls -la build/libs/
 
       - name: Publish to CurseForge, Modrinth & GitHub
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           # Modrinth
-          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-id: ${{ steps.gradle-props.outputs.modrinth_project_id }}
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
           # CurseForge
-          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-id: ${{ steps.gradle-props.outputs.curseforge_project_id }}
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           # GitHub Release
@@ -71,16 +83,16 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
           # Common settings
-          name: AE2 Autorequester ${{ needs.release-please.outputs.version }}
+          name: ${{ steps.gradle-props.outputs.mod_name }} ${{ needs.release-please.outputs.version }}
           version: ${{ needs.release-please.outputs.version }}
           version-type: release
           changelog-file: CHANGELOG.md
-          loaders: neoforge
-          game-versions: 1.21.1
-          java: 21
+          loaders: ${{ steps.gradle-props.outputs.mod_loaders }}
+          game-versions: ${{ steps.gradle-props.outputs.minecraft_version }}
+          java: ${{ steps.gradle-props.outputs.java_version }}
           files: build/libs/!(*-sources).jar
           dependencies: |
-            ae2(required){modrinth:XxWD5pD3}{curseforge:223794}
+            ae2(required){modrinth:${{ steps.gradle-props.outputs.modrinth_ae2_id }}}{curseforge:${{ steps.gradle-props.outputs.curseforge_ae2_id }}}
 
       - name: Publish to GitHub Packages
         run: ./gradlew publish
