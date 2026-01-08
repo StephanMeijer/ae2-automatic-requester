@@ -55,13 +55,32 @@ jobs:
       - name: List build artifacts
         run: ls -la build/libs/
 
-      - name: Upload Release Artifact
-        uses: softprops/action-gh-release@v2
+      - name: Publish to CurseForge, Modrinth & GitHub
+        uses: Kir-Antipov/mc-publish@v3.3
         with:
-          tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: |
-            build/libs/*.jar
-            !build/libs/*-sources.jar
+          # Modrinth
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          # CurseForge
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          # GitHub Release
+          github-tag: ${{ needs.release-please.outputs.tag_name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Common settings
+          name: AE2 Autorequester ${{ needs.release-please.outputs.version }}
+          version: ${{ needs.release-please.outputs.version }}
+          version-type: release
+          changelog-file: CHANGELOG.md
+          loaders: neoforge
+          game-versions: 1.21.1
+          java: 21
+          files: build/libs/!(*-sources).jar
+          dependencies: |
+            ae2(required){modrinth:XxWD5pD3}{curseforge:223794}
 
       - name: Publish to GitHub Packages
         run: ./gradlew publish
