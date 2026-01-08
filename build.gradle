@@ -200,16 +200,51 @@ sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
 neoForge.ideSyncTask generateModMetadata
 
-// Example configuration to allow publishing using the maven-publish plugin
+// Maven publishing to GitHub Packages
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
             from components.java
+
+            groupId = project.mod_group_id
+            artifactId = project.mod_id
+            version = project.mod_version
+
+            pom {
+                name = project.mod_name
+                description = project.mod_description
+                url = 'https://github.com/StephanMeijer/ae2-automatic-requester'
+
+                licenses {
+                    license {
+                        name = 'GNU General Public License v3.0'
+                        url = 'https://www.gnu.org/licenses/gpl-3.0.html'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'stephanmeijer'
+                        name = 'Stephan Meijer'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/StephanMeijer/ae2-automatic-requester.git'
+                    developerConnection = 'scm:git:ssh://github.com/StephanMeijer/ae2-automatic-requester.git'
+                    url = 'https://github.com/StephanMeijer/ae2-automatic-requester'
+                }
+            }
         }
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/repo"
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/StephanMeijer/ae2-automatic-requester')
+            credentials {
+                username = System.getenv('GITHUB_ACTOR') ?: project.findProperty('gpr.user') ?: ''
+                password = System.getenv('GITHUB_TOKEN') ?: project.findProperty('gpr.key') ?: ''
+            }
         }
     }
 }
