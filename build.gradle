@@ -124,12 +124,14 @@ dependencies {
     // Applied Energistics 2
     implementation "org.appliedenergistics:appliedenergistics2:${ae2_version}"
 
-    // JEI - primary recipe viewer API (also compatible with EMI)
+    // JEI - recipe viewer API (for JEI compatibility)
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    // Uncomment for testing with JEI instead of EMI:
     runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 
-    // EMI - alternative recipe viewer (uses JEI API compatibility layer)
-    // Uncomment to test with EMI instead of JEI:
+    // EMI - recipe viewer with native drag-drop support
+    compileOnly "dev.emi:emi-neoforge:${emi_version}"
+    // Uncomment for testing with EMI instead of JEI:
     // runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
 
     // Mekanism - for testing with energy sources
