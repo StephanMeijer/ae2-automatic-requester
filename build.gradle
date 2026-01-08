@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.137'
+    id 'com.diffplug.spotless' version '7.0.2'
 }
 
 version = mod_version
@@ -42,6 +43,34 @@ base {
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+// Code formatting with Spotless
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+
+        // Remove unused imports
+        removeUnusedImports()
+
+        // Import ordering: java, javax, then others alphabetically
+        importOrder('java', 'javax', '', '\\#')
+
+        // Trim trailing whitespace
+        trimTrailingWhitespace()
+
+        // Ensure files end with newline
+        endWithNewline()
+
+        // Indentation: 4 spaces (convert tabs to spaces)
+        leadingTabsToSpaces(4)
+    }
+
+    format 'misc', {
+        target '*.gradle', '*.md', '.gitignore'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
 
 neoForge {
     // Specify the version of NeoForge to use.
