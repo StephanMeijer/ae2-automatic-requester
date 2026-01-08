@@ -55,6 +55,35 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     private static final int STATUS_ICON_SIZE = 12;
     private static final int STATUS_ICON_MARGIN = 8;
 
+    // Rule entry layout (within RULE_ENTRY_HEIGHT = 24)
+    private static final int ENTRY_STATUS_ICON_X = 0;
+    private static final int ENTRY_STATUS_ICON_Y = 4;
+    private static final int ENTRY_STATUS_ICON_SIZE = 12;
+    private static final int ENTRY_ITEM_X = 16;
+    private static final int ENTRY_ITEM_Y = 2;
+    private static final int ENTRY_TEXT_X = 36;
+    private static final int ENTRY_TEXT_LINE1_Y = 2;
+    private static final int ENTRY_TEXT_LINE2_Y = 12;
+    private static final int ENTRY_TOGGLE_Y = 4;
+
+    // Screen state context (preserved across reopens)
+    private static int contextScrollOffset = -1;
+    private static int contextSelectedIndex = -1;
+    private static boolean contextScrollToBottom;
+
+    /**
+     * Sets the context for screen state preservation when reopening.
+     *
+     * @param scrollOffset The scroll offset to restore (-1 to not restore)
+     * @param selectedIndex The selected rule index to restore (-1 for no selection)
+     * @param scrollToBottom If true, scroll to bottom and select last rule (overrides other params)
+     */
+    public static void setReopenContext(int scrollOffset, int selectedIndex, boolean scrollToBottom) {
+        contextScrollOffset = scrollOffset;
+        contextSelectedIndex = selectedIndex;
+        contextScrollToBottom = scrollToBottom;
+    }
+
     private int scrollOffset;
     private int selectedRuleIndex = -1;
     private final DoubleClickHandler ruleDoubleClick = new DoubleClickHandler();
@@ -130,8 +159,27 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.move_down")))
                 .build());
 
+        // Load preserved state from context (if any)
+        loadStateFromContext();
+
         // Initial button state update
         updateButtonStates();
+    }
+
+    private void loadStateFromContext() {
+        if (contextScrollToBottom) {
+            // After add: scroll to show last rule, select it
+            scrollOffset = Math.max(0, menu.getRules().size() - MAX_VISIBLE_RULES);
+            selectedRuleIndex = menu.getRules().size() - 1;
+        } else if (contextScrollOffset >= 0) {
+            // After edit/cancel: restore previous state
+            scrollOffset = Math.min(contextScrollOffset, Math.max(0, menu.getRules().size() - MAX_VISIBLE_RULES));
+            selectedRuleIndex = Math.min(contextSelectedIndex, menu.getRules().size() - 1);
+        }
+        // Reset context
+        contextScrollOffset = -1;
+        contextSelectedIndex = -1;
+        contextScrollToBottom = false;
     }
 
     private void updateButtonStates() {
@@ -258,12 +306,14 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     private void renderRuleEntry(GuiGraphics guiGraphics, CraftingRule rule, int x, int y) {
         // Status icon (colored square) - green for enabled, red for disabled
         int statusColor = rule.isEnabled() ? GuiColors.STATUS_SUCCESS : GuiColors.STATUS_ERROR;
-        guiGraphics.fill(x, y + 4, x + 12, y + 16, GuiColors.STATUS_ICON_BORDER);
-        guiGraphics.fill(x + 1, y + 5, x + 11, y + 15, statusColor);
+        int statusX = x + ENTRY_STATUS_ICON_X;
+        int statusY = y + ENTRY_STATUS_ICON_Y;
+        guiGraphics.fill(statusX, statusY, statusX + ENTRY_STATUS_ICON_SIZE, statusY + ENTRY_STATUS_ICON_SIZE, GuiColors.STATUS_ICON_BORDER);
+        guiGraphics.fill(statusX + 1, statusY + 1, statusX + ENTRY_STATUS_ICON_SIZE - 1, statusY + ENTRY_STATUS_ICON_SIZE - 1, statusColor);
 
         // Target item icon
         if (rule.getTargetItem() != null && !rule.getTargetItemStack().isEmpty()) {
-            guiGraphics.renderItem(rule.getTargetItemStack(), x + 16, y + 2);
+            guiGraphics.renderItem(rule.getTargetItemStack(), x + ENTRY_ITEM_X, y + ENTRY_ITEM_Y);
         }
 
         // Rule name/target
@@ -272,15 +322,15 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             displayName = displayName.substring(0, 17) + "...";
         }
         int textColor = rule.isEnabled() ? GuiColors.TEXT_PRIMARY : GuiColors.TEXT_SECONDARY;
-        guiGraphics.drawString(font, displayName, x + 36, y + 2, textColor);
+        guiGraphics.drawString(font, displayName, x + ENTRY_TEXT_X, y + ENTRY_TEXT_LINE1_Y, textColor);
 
         // Condition count and batch size
         String info = rule.getConditions().size() + " cond. | ×" + rule.getBatchSize();
-        guiGraphics.drawString(font, info, x + 36, y + 12, GuiColors.TEXT_SECONDARY);
+        guiGraphics.drawString(font, info, x + ENTRY_TEXT_X, y + ENTRY_TEXT_LINE2_Y, GuiColors.TEXT_SECONDARY);
 
         // Enable/disable toggle - colored box with text
         int toggleX = x + TOGGLE_X_OFFSET;
-        int toggleY = y + 4;
+        int toggleY = y + ENTRY_TOGGLE_Y;
         int toggleColor = rule.isEnabled() ? GuiColors.STATUS_SUCCESS : GuiColors.STATUS_DISABLED;
         guiGraphics.fill(toggleX, toggleY, toggleX + TOGGLE_WIDTH, toggleY + TOGGLE_HEIGHT, GuiColors.STATUS_ICON_BORDER);
         guiGraphics.fill(toggleX + 1, toggleY + 1, toggleX + TOGGLE_WIDTH - 1, toggleY + TOGGLE_HEIGHT - 1, toggleColor);
@@ -307,12 +357,17 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             int y = topPos + RULE_LIST_Y + (i * RULE_ENTRY_HEIGHT) + 2;
 
             // Status icon tooltip
-            if (mouseX >= x && mouseX < x + 12 && mouseY >= y + 4 && mouseY < y + 16) {
+            int statusX = x + ENTRY_STATUS_ICON_X;
+            int statusY = y + ENTRY_STATUS_ICON_Y;
+            if (mouseX >= statusX && mouseX < statusX + ENTRY_STATUS_ICON_SIZE &&
+                    mouseY >= statusY && mouseY < statusY + ENTRY_STATUS_ICON_SIZE) {
                 guiGraphics.renderComponentTooltip(font, getStatusTooltip(rule), mouseX, mouseY);
             }
 
-            // Target item tooltip
-            if (mouseX >= x + 16 && mouseX < x + 32 && mouseY >= y + 2 && mouseY < y + 18) {
+            // Target item tooltip (16x16 item at ENTRY_ITEM_X, ENTRY_ITEM_Y)
+            int itemX = x + ENTRY_ITEM_X;
+            int itemY = y + ENTRY_ITEM_Y;
+            if (mouseX >= itemX && mouseX < itemX + 16 && mouseY >= itemY && mouseY < itemY + 16) {
                 if (!rule.getTargetItemStack().isEmpty()) {
                     guiGraphics.renderTooltip(font, rule.getTargetItemStack(), mouseX, mouseY);
                 }
@@ -477,11 +532,14 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
                 LOG.info("[MainScreen] Calling menu.updateRule()");
                 menu.updateRule(lastRule);
             }
+            // Set context to scroll to bottom after reopen
+            AutorequesterScreen.setReopenContext(0, -1, true);
             // Request server to reopen the main screen
             LOG.info("[MainScreen] Sending OpenAutorequesterPacket to server");
             PacketDistributor.sendToServer(new OpenAutorequesterPacket(pos));
         }, () -> {
-            // Cancel - just reopen main screen
+            // Cancel - preserve current state
+            AutorequesterScreen.setReopenContext(scrollOffset, selectedRuleIndex, false);
             PacketDistributor.sendToServer(new OpenAutorequesterPacket(pos));
         }, Component.translatable("ae2_autorequester.gui.create_rule"));
     }
@@ -490,12 +548,17 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         if (selectedRuleIndex >= 0 && selectedRuleIndex < menu.getRules().size()) {
             BlockPos pos = menu.getBlockEntity().getBlockPos();
             CraftingRule rule = menu.getRules().get(selectedRuleIndex);
+            final int editingIndex = selectedRuleIndex;
+            final int currentScroll = scrollOffset;
             RuleEditorScreen.open(rule, updatedRule -> {
                 menu.updateRule(updatedRule);
+                // Preserve current state
+                AutorequesterScreen.setReopenContext(currentScroll, editingIndex, false);
                 // Request server to reopen the main screen
                 PacketDistributor.sendToServer(new OpenAutorequesterPacket(pos));
             }, () -> {
-                // Cancel - just reopen main screen
+                // Cancel - preserve current state
+                AutorequesterScreen.setReopenContext(currentScroll, editingIndex, false);
                 PacketDistributor.sendToServer(new OpenAutorequesterPacket(pos));
             }, Component.translatable("ae2_autorequester.gui.edit_rule"));
         }
@@ -515,7 +578,21 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         if (selectedRuleIndex >= 0 && selectedRuleIndex < menu.getRules().size()) {
             menu.duplicateRule(selectedRuleIndex);
             selectedRuleIndex++;
+            ensureRuleVisible(selectedRuleIndex);
             updateButtonStates();
+        }
+    }
+
+    /**
+     * Adjusts scroll offset to ensure the given rule index is visible.
+     */
+    private void ensureRuleVisible(int ruleIndex) {
+        if (ruleIndex < scrollOffset) {
+            // Rule is above visible area
+            scrollOffset = ruleIndex;
+        } else if (ruleIndex >= scrollOffset + MAX_VISIBLE_RULES) {
+            // Rule is below visible area
+            scrollOffset = ruleIndex - MAX_VISIBLE_RULES + 1;
         }
     }
 
@@ -523,6 +600,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         if (selectedRuleIndex > 0) {
             menu.moveRuleUp(selectedRuleIndex);
             selectedRuleIndex--;
+            ensureRuleVisible(selectedRuleIndex);
         }
     }
 
@@ -530,6 +608,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         if (selectedRuleIndex >= 0 && selectedRuleIndex < menu.getRules().size() - 1) {
             menu.moveRuleDown(selectedRuleIndex);
             selectedRuleIndex++;
+            ensureRuleVisible(selectedRuleIndex);
         }
     }
 

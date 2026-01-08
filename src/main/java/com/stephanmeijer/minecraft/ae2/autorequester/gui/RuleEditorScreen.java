@@ -53,7 +53,8 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private static final int TARGET_ITEM_LABEL_X = 150;
     private static final int TARGET_ITEM_SLOT_X = 226;
     private static final int TARGET_ITEM_SLOT_SIZE = 20;
-    private static final int TARGET_ITEM_SLOT_Y_OFFSET = -2; // Vertical centering adjustment
+    // Vertical offset to center 20px slot with 16px field: (16 - 20) / 2 = -2
+    private static final int TARGET_ITEM_SLOT_Y_OFFSET = (NAME_FIELD_HEIGHT - TARGET_ITEM_SLOT_SIZE) / 2;
 
     // Conditions section
     private static final int CONDITIONS_HEADER_Y = 68;
@@ -67,6 +68,13 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private static final int CONDITION_LIST_HEIGHT = CONDITION_LIST_END_Y - CONDITION_LIST_Y;
     private static final int MAX_VISIBLE_CONDITIONS = CONDITION_LIST_HEIGHT / CONDITION_HEIGHT;
 
+    // Condition entry layout (within CONDITION_HEIGHT = 24)
+    private static final int COND_ENTRY_SLOT_SIZE = 18;
+    private static final int COND_ENTRY_SLOT_Y = (CONDITION_HEIGHT - COND_ENTRY_SLOT_SIZE) / 2;  // Center 18px in 24px
+    private static final int COND_ENTRY_OPERATOR_X = 24;
+    private static final int COND_ENTRY_TEXT_Y = (CONDITION_HEIGHT - 9) / 2;  // ~9px font height, centered
+    private static final int COND_ENTRY_THRESHOLD_X = 50;
+
     // Bottom button row
     private static final int BOTTOM_BUTTON_Y_OFFSET = GUI_HEIGHT - 28;
 
@@ -76,6 +84,9 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private static CraftingRule contextRule;
     private static Consumer<CraftingRule> contextOnSave;
     private static Runnable contextOnCancel;
+    // Preserved state for condition list when reopening
+    private static int contextConditionScrollOffset;
+    private static int contextSelectedConditionIndex = -1;
 
     /**
      * Opens the rule editor screen.
@@ -238,7 +249,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
 
     private void loadFromContext() {
         if (contextRule != null) {
-            // First time opening - load from static context
+            // Load from static context
             this.editingRule = contextRule;
             this.onSave = contextOnSave;
             this.onCancel = contextOnCancel;
@@ -249,12 +260,18 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
                 this.conditions.add(c.copy());
             }
 
+            // Restore scroll/selection state
+            this.conditionScrollOffset = Math.min(contextConditionScrollOffset,
+                    Math.max(0, conditions.size() - MAX_VISIBLE_CONDITIONS));
+            this.selectedConditionIndex = Math.min(contextSelectedConditionIndex, conditions.size() - 1);
+
             // Clear context
             contextRule = null;
             contextOnSave = null;
             contextOnCancel = null;
+            contextConditionScrollOffset = 0;
+            contextSelectedConditionIndex = -1;
         }
-        // If context is null, we're being restored after condition editor - state already set
     }
 
     private void updateButtonStates() {
@@ -314,10 +331,10 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
                     // Add the new condition to our list
                     conditions.add(savedCondition);
                     selectedConditionIndex = conditions.size() - 1;
-                    // Reopen this screen
-                    reopenSelf();
+                    // Reopen this screen scrolled to bottom
+                    reopenSelfScrollToBottom();
                 },
-                this::reopenSelf, // On cancel, just reopen
+                this::reopenSelf, // On cancel, just reopen preserving state
                 Component.translatable("ae2_autorequester.gui.create_condition")
         );
     }
@@ -362,6 +379,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
             CraftingCondition copy = conditions.get(selectedConditionIndex).copy();
             conditions.add(selectedConditionIndex + 1, copy);
             selectedConditionIndex++;
+            ensureConditionVisible(selectedConditionIndex);
             updateButtonStates();
         }
     }
@@ -371,6 +389,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
             CraftingCondition condition = conditions.remove(selectedConditionIndex);
             conditions.add(selectedConditionIndex - 1, condition);
             selectedConditionIndex--;
+            ensureConditionVisible(selectedConditionIndex);
             updateButtonStates();
         }
     }
@@ -380,7 +399,19 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
             CraftingCondition condition = conditions.remove(selectedConditionIndex);
             conditions.add(selectedConditionIndex + 1, condition);
             selectedConditionIndex++;
+            ensureConditionVisible(selectedConditionIndex);
             updateButtonStates();
+        }
+    }
+
+    /**
+     * Adjusts scroll offset to ensure the given condition index is visible.
+     */
+    private void ensureConditionVisible(int conditionIndex) {
+        if (conditionIndex < conditionScrollOffset) {
+            conditionScrollOffset = conditionIndex;
+        } else if (conditionIndex >= conditionScrollOffset + MAX_VISIBLE_CONDITIONS) {
+            conditionScrollOffset = conditionIndex - MAX_VISIBLE_CONDITIONS + 1;
         }
     }
 
@@ -410,6 +441,17 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     }
 
     private void reopenSelf() {
+        reopenSelfWithState(conditionScrollOffset, selectedConditionIndex);
+    }
+
+    private void reopenSelfScrollToBottom() {
+        // After adding: scroll to bottom, select last condition
+        int newScrollOffset = Math.max(0, conditions.size() - MAX_VISIBLE_CONDITIONS);
+        int newSelectedIndex = conditions.size() - 1;
+        reopenSelfWithState(newScrollOffset, newSelectedIndex);
+    }
+
+    private void reopenSelfWithState(int scrollOffset, int selectedIndex) {
         // Sync current state
         syncUIToRule();
 
@@ -417,6 +459,8 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         contextRule = editingRule;
         contextOnSave = onSave;
         contextOnCancel = onCancel;
+        contextConditionScrollOffset = scrollOffset;
+        contextSelectedConditionIndex = selectedIndex;
 
         // Reopen
         Minecraft mc = Minecraft.getInstance();
@@ -529,17 +573,19 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     }
 
     private void renderConditionEntry(GuiGraphics guiGraphics, CraftingCondition condition, int x, int y) {
-        // Item slot
-        guiGraphics.fill(x, y, x + 18, y + 18, GuiColors.SLOT_INNER);
+        // Item slot - centered vertically within entry
+        int slotY = y + COND_ENTRY_SLOT_Y;
+        guiGraphics.fill(x, slotY, x + COND_ENTRY_SLOT_SIZE, slotY + COND_ENTRY_SLOT_SIZE, GuiColors.SLOT_INNER);
         if (!condition.getItemStack().isEmpty()) {
-            guiGraphics.renderItem(condition.getItemStack(), x + 1, y + 1);
+            guiGraphics.renderItem(condition.getItemStack(), x + 1, slotY + 1);
         }
 
-        // Operator symbol
-        guiGraphics.drawString(font, condition.getOperator().getSymbol(), x + 24, y + 5, GuiColors.TEXT_PRIMARY);
+        // Operator symbol - centered vertically
+        int textY = y + COND_ENTRY_TEXT_Y;
+        guiGraphics.drawString(font, condition.getOperator().getSymbol(), x + COND_ENTRY_OPERATOR_X, textY, GuiColors.TEXT_PRIMARY);
 
         // Threshold value
-        guiGraphics.drawString(font, String.valueOf(condition.getThreshold()), x + 50, y + 5, GuiColors.TEXT_HIGHLIGHT);
+        guiGraphics.drawString(font, String.valueOf(condition.getThreshold()), x + COND_ENTRY_THRESHOLD_X, textY, GuiColors.TEXT_HIGHLIGHT);
     }
 
     @Override
