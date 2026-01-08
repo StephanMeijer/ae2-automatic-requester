@@ -9,9 +9,12 @@
       "extra-files": [
         {
           "type": "generic",
-          "path": "gradle.properties"
+          "path": "gradle.properties",
+          "glob": false
         }
       ],
+      "versioning": "default",
+      "extra-files-strategy": "merge",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
