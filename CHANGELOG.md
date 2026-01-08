@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.1](https://github.com/StephanMeijer/ae2-automatic-requester/compare/v1.2.0...v1.2.1) (2026-01-08)
+
+
+### Bug Fixes
+
+* add comprehensive static analysis tooling ([c28eb3f](https://github.com/StephanMeijer/ae2-automatic-requester/commit/c28eb3f5670004670cebf6888d3368688a9902ce))
+* sync mod_version with release-please manifest ([6515c0a](https://github.com/StephanMeijer/ae2-automatic-requester/commit/6515c0a02f37cc67526e1b9628b0c269227994f3))
+* use VERSION file for release-please version sync ([c01a097](https://github.com/StephanMeijer/ae2-automatic-requester/commit/c01a09793f1f5913318fd7c684634a724acca8ad))
+
 ## [1.2.0](https://github.com/StephanMeijer/ae2-automatic-requester/compare/v1.1.0...v1.2.0) (2026-01-08)
 
 
