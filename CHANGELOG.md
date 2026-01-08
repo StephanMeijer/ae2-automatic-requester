@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/StephanMeijer/ae2-automatic-requester/compare/v1.2.1...v1.2.2) (2026-01-08)
+
+
+### Bug Fixes
+
+* **gui:** properly initialize button state and sync rule updates to screens ([5dfdeb6](https://github.com/StephanMeijer/ae2-automatic-requester/commit/5dfdeb6d3a5147794c700a7e8e40917775c11e3d))
+
 ## [1.2.1](https://github.com/StephanMeijer/ae2-automatic-requester/compare/v1.2.0...v1.2.1) (2026-01-08)
 
 
