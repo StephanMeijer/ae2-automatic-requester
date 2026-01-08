@@ -44,6 +44,12 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+// Treat warnings as errors
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Werror' << '-Xlint:all,-processing,-serial'
+    options.deprecation = true
+}
+
 // Unit tests with JUnit 5
 // Note: Tests requiring Minecraft classes use GameTests (runGameTestServer)
 // Pure logic tests can run via ./gradlew test

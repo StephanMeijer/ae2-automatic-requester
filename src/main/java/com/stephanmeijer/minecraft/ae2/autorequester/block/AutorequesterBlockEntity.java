@@ -58,7 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AutorequesterBlockEntity extends BlockEntity implements MenuProvider, IInWorldGridNodeHost, IStorageWatcherNode, ICraftingRequester, ICraftingSimulationRequester {
+public final class AutorequesterBlockEntity extends BlockEntity implements MenuProvider, IInWorldGridNodeHost, IStorageWatcherNode, ICraftingRequester, ICraftingSimulationRequester {
     private static final Logger LOG = LoggerFactory.getLogger(AutorequesterBlockEntity.class);
 
     // ==================== Grid Node Listener ====================

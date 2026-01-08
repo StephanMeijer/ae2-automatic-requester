@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
  * Contains a single hidden slot to satisfy EMI's screen detection requirements.
  * EMI only shows its panel for screens with non-empty slot lists.
  */
-public class ConditionEditorMenu extends AbstractContainerMenu {
+public final class ConditionEditorMenu extends AbstractContainerMenu {
 
     // Dummy container for the hidden slot
     private final SimpleContainer dummyContainer = new SimpleContainer(1);

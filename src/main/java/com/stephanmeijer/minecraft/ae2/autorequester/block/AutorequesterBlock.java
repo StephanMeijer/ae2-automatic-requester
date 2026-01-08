@@ -43,7 +43,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
-public class AutorequesterBlock extends BaseEntityBlock {
+public final class AutorequesterBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<BlockStatus> STATUS = EnumProperty.create("status", BlockStatus.class);
     public static final MapCodec<AutorequesterBlock> CODEC = simpleCodec(p -> new AutorequesterBlock());
