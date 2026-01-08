@@ -85,14 +85,6 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # OWASP Dependency Check (slow, only on pre-push or manual)
-      - id: owasp-check
-        name: OWASP Dependency Check
-        entry: ./gradlew dependencyCheckAnalyze --no-daemon -q
-        language: system
-        pass_filenames: false
-        stages: [manual]
-
       # Verify data generators are up-to-date (slow, requires Minecraft)
       - id: verify-datagen
         name: Verify DataGen

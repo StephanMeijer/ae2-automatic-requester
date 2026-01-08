@@ -11,18 +11,24 @@
 # create lefthook-local.yml and add it to .gitignore
 
 pre-commit:
+  parallel: true
   commands:
     spotless-apply:
       run: ./gradlew spotlessApply --quiet
-      stage_fixed: true  # Re-stage files after formatting
+      stage_fixed: true
     test:
       run: ./gradlew test --quiet
-      glob: "*.{java,gradle,properties}"
+    lint:
+      run: ./gradlew checkstyleMain checkstyleTest --quiet
+    spotbugs:
+      run: ./gradlew spotbugsMain spotbugsTest --quiet
     build:
-      run: ./gradlew build -x test --quiet
-      glob: "*.{java,gradle,properties}"
+      run: ./gradlew classes testClasses --quiet
 
 pre-push:
+  parallel: true
   commands:
     spotless-check:
       run: ./gradlew spotlessCheck --quiet
+    full-build:
+      run: ./gradlew build --quiet
