@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "ae2_autorequester:block/autorequester" },
+    "facing=south": { "model": "ae2_autorequester:block/autorequester", "y": 180 },
+    "facing=east": { "model": "ae2_autorequester:block/autorequester", "y": 90 },
+    "facing=west": { "model": "ae2_autorequester:block/autorequester", "y": 270 }
+  }
+}

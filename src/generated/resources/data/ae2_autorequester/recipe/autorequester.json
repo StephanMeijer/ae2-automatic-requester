@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "ae2:calculation_processor"
+    },
+    "E": {
+      "item": "ae2:engineering_processor"
+    },
+    "L": {
+      "item": "ae2:logic_processor"
+    },
+    "P": {
+      "item": "ae2:pattern_provider"
+    }
+  },
+  "pattern": [
+    "LEL",
+    "CPC",
+    "LEL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "ae2_autorequester:autorequester"
+  }
+}

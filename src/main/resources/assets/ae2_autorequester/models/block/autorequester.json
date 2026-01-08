@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "ae2_autorequester:block/autorequester_bottom",
+    "up": "ae2_autorequester:block/autorequester_top",
+    "north": "ae2_autorequester:block/autorequester_front",
+    "south": "ae2_autorequester:block/autorequester_side",
+    "east": "ae2_autorequester:block/autorequester_side",
+    "west": "ae2_autorequester:block/autorequester_side",
+    "particle": "ae2_autorequester:block/autorequester_side"
+  }
+}
