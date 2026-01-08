@@ -35,7 +35,7 @@ public final class ConditionEditorMenu extends AbstractContainerMenu {
      * A slot that is always hidden and non-interactive.
      */
     private static class HiddenSlot extends Slot {
-        public HiddenSlot(SimpleContainer container, int index, int x, int y) {
+        HiddenSlot(SimpleContainer container, int index, int x, int y) {
             super(container, index, x, y);
         }
 

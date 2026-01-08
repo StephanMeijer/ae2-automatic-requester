@@ -528,7 +528,7 @@ public final class AutorequesterBlockEntity extends BlockEntity implements MenuP
             return;
         }
 
-        if (plan.missingItems().isEmpty() == false) {
+        if (!plan.missingItems().isEmpty()) {
             LOG.debug("[Autorequester] Crafting plan has missing items, cannot submit");
             rule.setStatus(RuleStatus.MISSING_PATTERN);
             return;
@@ -907,6 +907,7 @@ public final class AutorequesterBlockEntity extends BlockEntity implements MenuP
         GridHelper.onFirstTick(this, AutorequesterBlockEntity::onReady);
     }
 
+    @Override
     public void onChunkUnloaded() {
         mainNode.destroy();
     }

@@ -1,5 +1,6 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.stephanmeijer.minecraft.ae2.autorequester.compat.IGhostItemTarget;
@@ -207,9 +208,7 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
     }
 
     private void cycleOperator() {
-        ComparisonOperator[] ops = ComparisonOperator.values();
-        int nextOrd = (currentOperator.ordinal() + 1) % ops.length;
-        currentOperator = ops[nextOrd];
+        currentOperator = currentOperator.next();
         operatorButton.setMessage(Component.literal(currentOperator.getSymbol()));
     }
 
@@ -278,7 +277,7 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
 
         // Operator tooltip
         if (operatorButton.isHovered()) {
-            guiGraphics.renderTooltip(font, Component.translatable("ae2_autorequester.tooltip.operator." + currentOperator.name().toLowerCase()), mouseX, mouseY);
+            guiGraphics.renderTooltip(font, Component.translatable("ae2_autorequester.tooltip.operator." + currentOperator.name().toLowerCase(Locale.ROOT)), mouseX, mouseY);
         }
     }
 

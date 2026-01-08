@@ -329,7 +329,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             switch (status) {
                 case MISSING_PATTERN -> tooltip.add(Component.translatable("ae2_autorequester.gui.no_pattern").withStyle(s -> s.withColor(0xAAAAAA)));
                 case NO_CPU -> tooltip.add(Component.translatable("ae2_autorequester.gui.no_cpu").withStyle(s -> s.withColor(0xAAAAAA)));
-                default -> {}
+                default -> { }
             }
         }
 

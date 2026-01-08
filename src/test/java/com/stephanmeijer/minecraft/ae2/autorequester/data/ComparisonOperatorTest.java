@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("ComparisonOperator")
 class ComparisonOperatorTest {
@@ -110,24 +112,24 @@ class ComparisonOperatorTest {
     }
 
     @Nested
-    @DisplayName("fromOrdinal")
-    class FromOrdinalTests {
+    @DisplayName("fromName")
+    class FromNameTests {
         @Test
-        @DisplayName("returns correct operator for valid ordinals")
-        void validOrdinals() {
-            assertEquals(ComparisonOperator.LESS_THAN, ComparisonOperator.fromOrdinal(0));
-            assertEquals(ComparisonOperator.LESS_THAN_OR_EQUAL, ComparisonOperator.fromOrdinal(1));
-            assertEquals(ComparisonOperator.GREATER_THAN, ComparisonOperator.fromOrdinal(2));
-            assertEquals(ComparisonOperator.GREATER_THAN_OR_EQUAL, ComparisonOperator.fromOrdinal(3));
-            assertEquals(ComparisonOperator.EQUAL, ComparisonOperator.fromOrdinal(4));
-            assertEquals(ComparisonOperator.NOT_EQUAL, ComparisonOperator.fromOrdinal(5));
+        @DisplayName("returns correct operator for valid names")
+        void validNames() {
+            assertEquals(ComparisonOperator.LESS_THAN, ComparisonOperator.fromName("LESS_THAN"));
+            assertEquals(ComparisonOperator.LESS_THAN_OR_EQUAL, ComparisonOperator.fromName("LESS_THAN_OR_EQUAL"));
+            assertEquals(ComparisonOperator.GREATER_THAN, ComparisonOperator.fromName("GREATER_THAN"));
+            assertEquals(ComparisonOperator.GREATER_THAN_OR_EQUAL, ComparisonOperator.fromName("GREATER_THAN_OR_EQUAL"));
+            assertEquals(ComparisonOperator.EQUAL, ComparisonOperator.fromName("EQUAL"));
+            assertEquals(ComparisonOperator.NOT_EQUAL, ComparisonOperator.fromName("NOT_EQUAL"));
         }
 
         @Test
-        @DisplayName("returns LESS_THAN for invalid ordinals")
-        void invalidOrdinals() {
-            assertEquals(ComparisonOperator.LESS_THAN, ComparisonOperator.fromOrdinal(-1));
-            assertEquals(ComparisonOperator.LESS_THAN, ComparisonOperator.fromOrdinal(100));
+        @DisplayName("returns LESS_THAN for invalid names")
+        void invalidNames() {
+            assertEquals(ComparisonOperator.LESS_THAN, ComparisonOperator.fromName("INVALID"));
+            assertEquals(ComparisonOperator.LESS_THAN, ComparisonOperator.fromName(""));
         }
     }
 

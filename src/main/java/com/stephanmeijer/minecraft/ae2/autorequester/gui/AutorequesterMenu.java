@@ -28,7 +28,7 @@ public class AutorequesterMenu extends AbstractContainerMenu {
 
     // Client constructor (from network)
     public AutorequesterMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {
-        this(containerId, playerInventory, getBlockEntity(playerInventory, extraData));
+        this(containerId, playerInventory, extractBlockEntity(playerInventory, extraData));
     }
 
     // Server constructor
@@ -61,7 +61,7 @@ public class AutorequesterMenu extends AbstractContainerMenu {
         }
     }
 
-    private static AutorequesterBlockEntity getBlockEntity(Inventory playerInventory, FriendlyByteBuf extraData) {
+    private static AutorequesterBlockEntity extractBlockEntity(Inventory playerInventory, FriendlyByteBuf extraData) {
         var pos = extraData.readBlockPos();
         BlockEntity be = playerInventory.player.level().getBlockEntity(pos);
         if (be instanceof AutorequesterBlockEntity autorequester) {

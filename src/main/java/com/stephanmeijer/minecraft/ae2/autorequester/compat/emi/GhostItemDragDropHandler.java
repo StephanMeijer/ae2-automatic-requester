@@ -73,7 +73,7 @@ class GhostItemDragDropHandler implements EmiDragDropHandler<Screen> {
     }
 
     private boolean isWithinBounds(int x, int y, Rect2i bounds) {
-        return x >= bounds.getX() && x < bounds.getX() + bounds.getWidth()
-                && y >= bounds.getY() && y < bounds.getY() + bounds.getHeight();
+        return x >= bounds.getX() && x < bounds.getX() + bounds.getWidth() &&
+                y >= bounds.getY() && y < bounds.getY() + bounds.getHeight();
     }
 }

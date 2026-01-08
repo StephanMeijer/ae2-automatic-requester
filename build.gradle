@@ -4,6 +4,10 @@ plugins {
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.137'
     id 'com.diffplug.spotless' version '7.0.2'
+    id 'com.github.spotbugs' version '6.1.6'
+    id 'checkstyle'
+    id 'org.owasp.dependencycheck' version '12.0.1'
+    id 'net.ltgt.errorprone' version '4.1.0'
 }
 
 // Load version from version.txt (managed by release-please)
@@ -46,10 +50,35 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-// Treat warnings as errors
+// Treat warnings as errors and enable Error Prone
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Werror' << '-Xlint:all,-processing,-serial'
     options.deprecation = true
+
+    // Error Prone configuration
+    options.errorprone {
+        disableWarningsInGeneratedCode = true
+        allErrorsAsWarnings = false
+
+        // Disable checks that are too noisy for Minecraft mod development
+        disable('UnusedVariable')     // Noisy for GUI code with event handlers
+
+        // Promote useful checks to errors
+        error('MissingOverride')
+        error('EqualsHashCode')
+        error('ReferenceEquality')
+        error('EmptyCatch')
+        error('Finally')
+        error('FutureReturnValueIgnored')
+        error('MissingCasesInEnumSwitch')
+        error('StringCaseLocaleUsage')
+        error('EnumOrdinal')
+    }
+}
+
+// Disable Error Prone for test compilation (optional, can be noisy)
+tasks.named('compileTestJava') {
+    options.errorprone.enabled = false
 }
 
 // Unit tests with JUnit 5
@@ -96,6 +125,126 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
     }
+}
+
+// SpotBugs static analysis
+spotbugs {
+    ignoreFailures = false
+    showStackTraces = true
+    showProgress = true
+    excludeFilter = file('config/spotbugs/exclude.xml')
+    reportsDir = file("$buildDir/reports/spotbugs")
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    reports {
+        html.required = true
+        xml.required = false
+    }
+}
+
+// Checkstyle code style enforcement
+checkstyle {
+    toolVersion = '10.21.4'
+    configFile = file('config/checkstyle/checkstyle.xml')
+    maxWarnings = 0
+    maxErrors = 0
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        xml.required = false
+        html.required = true
+    }
+}
+
+// OWASP Dependency Check for security vulnerabilities
+dependencyCheck {
+    failBuildOnCVSS = 7.0f
+    suppressionFile = 'config/owasp/suppressions.xml'
+    formats = ['HTML', 'JSON']
+    outputDirectory = "$buildDir/reports/dependency-check"
+    analyzers {
+        // Disable analyzers that require network access or are slow
+        nodeEnabled = false
+        nodeAuditEnabled = false
+        retirejs {
+            enabled = false
+        }
+    }
+}
+
+// Data generator verification task
+tasks.register('verifyDataGen') {
+    description = 'Verifies that generated data files are up-to-date'
+    group = 'verification'
+
+    dependsOn runData
+
+    doLast {
+        def generatedDir = file('src/generated/resources')
+
+        // Check that generated directory exists
+        if (!generatedDir.exists()) {
+            throw new GradleException("Generated resources directory does not exist. Run 'runData' first.")
+        }
+
+        // Verify JSON files are valid
+        def jsonFiles = fileTree(generatedDir).matching { include '**/*.json' }
+        def jsonSlurper = new groovy.json.JsonSlurper()
+        jsonFiles.each { f ->
+            try {
+                jsonSlurper.parse(f)
+            } catch (Exception e) {
+                throw new GradleException("Invalid JSON in ${f.path}: ${e.message}")
+            }
+        }
+
+        logger.lifecycle("Data generation verification passed: ${jsonFiles.files.size()} JSON files validated")
+    }
+}
+
+// Validate JSON resources in main resources
+tasks.register('validateResources') {
+    description = 'Validates JSON resources are well-formed'
+    group = 'verification'
+
+    // Capture file references at configuration time for configuration cache compatibility
+    def assetsDir = layout.projectDirectory.dir('src/main/resources/assets')
+    def dataDir = layout.projectDirectory.dir('src/main/resources/data')
+
+    doLast {
+        def resourceDirs = [assetsDir.asFile, dataDir.asFile]
+        def jsonSlurper = new groovy.json.JsonSlurper()
+        def count = 0
+
+        resourceDirs.each { dir ->
+            if (dir.exists()) {
+                dir.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+                    if (f.name.endsWith('.json')) {
+                        try {
+                            jsonSlurper.parse(f)
+                            count++
+                        } catch (Exception e) {
+                            throw new GradleException("Invalid JSON in ${f.path}: ${e.message}")
+                        }
+                    }
+                }
+            }
+        }
+
+        logger.lifecycle("Resource validation passed: ${count} JSON files validated")
+    }
+}
+
+// Add validation to check task
+check.dependsOn validateResources
+
+// Composite task for all static analysis
+tasks.register('staticAnalysis') {
+    description = 'Runs all static analysis tools'
+    group = 'verification'
+    dependsOn 'spotbugsMain', 'checkstyleMain', 'validateResources'
 }
 
 neoForge {
@@ -175,6 +324,9 @@ neoForge {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
+    // Error Prone static analysis (compile-time)
+    errorprone 'com.google.errorprone:error_prone_core:2.36.0'
+
     // Testing
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'

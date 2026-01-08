@@ -16,8 +16,8 @@ public class DoubleClickHandler {
      */
     public boolean onClick(int clickedIndex) {
         long currentTime = System.currentTimeMillis();
-        boolean isDoubleClick = clickedIndex == lastClickedIndex
-                && currentTime - lastClickTime < DOUBLE_CLICK_THRESHOLD_MS;
+        boolean isDoubleClick = clickedIndex == lastClickedIndex &&
+                currentTime - lastClickTime < DOUBLE_CLICK_THRESHOLD_MS;
 
         if (isDoubleClick) {
             lastClickTime = 0;

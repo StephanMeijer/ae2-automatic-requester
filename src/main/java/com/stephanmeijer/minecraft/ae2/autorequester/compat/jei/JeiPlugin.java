@@ -87,7 +87,7 @@ public class JeiPlugin implements IModPlugin {
         private final Rect2i area;
         private final IGhostItemTarget target;
 
-        public ItemSlotTarget(Rect2i area, IGhostItemTarget target) {
+        ItemSlotTarget(Rect2i area, IGhostItemTarget target) {
             this.area = area;
             this.target = target;
         }

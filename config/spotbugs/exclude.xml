@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+        SpotBugs exclusion filter for AE2 Autorequester
+        Only exclude patterns that are genuinely false positives in Minecraft modding context.
+        Keep this list minimal - fix issues rather than suppressing them.
+    -->
+
+    <!-- Exclude generated code (data generators, mixins) -->
+    <Match>
+        <Source name="~.*Generated.*\.java"/>
+    </Match>
+
+    <!-- Minecraft/NeoForge patterns that are intentional -->
+    <Match>
+        <!-- Registry objects are intentionally compared by reference -->
+        <Bug pattern="ES_COMPARING_STRINGS_WITH_EQ"/>
+        <Class name="~.*Registry.*"/>
+    </Match>
+
+    <!-- Serialization patterns in Minecraft -->
+    <Match>
+        <Bug pattern="SE_BAD_FIELD"/>
+        <Class name="~.*Packet.*"/>
+    </Match>
+
+    <!-- Block entities often have intentional null field initialization -->
+    <Match>
+        <Bug pattern="UWF_UNWRITTEN_FIELD"/>
+        <Class name="~.*BlockEntity"/>
+    </Match>
+
+    <!-- NeoForge config classes use public fields by design -->
+    <Match>
+        <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
+        <Class name="~.*Config"/>
+    </Match>
+
+    <!-- EMI plugin intentionally matches EMI's naming convention -->
+    <Match>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+        <Class name="~.*\.compat\.emi\.EmiPlugin"/>
+    </Match>
+
+    <!-- Exposing internal representation is acceptable for Minecraft mod internal APIs -->
+    <!-- These getters are used for read-only access in practice, defensive copying would be wasteful -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- IPayloadContext.player() is annotated @Nonnull in NeoForge API, but we keep null checks for safety -->
+    <Match>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+        <Class name="~.*Packet"/>
+    </Match>
+</FindBugsFilter>

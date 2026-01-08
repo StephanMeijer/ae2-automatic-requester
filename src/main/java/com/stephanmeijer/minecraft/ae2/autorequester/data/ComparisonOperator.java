@@ -37,10 +37,23 @@ public enum ComparisonOperator {
         };
     }
 
-    public static ComparisonOperator fromOrdinal(int ordinal) {
-        if (ordinal >= 0 && ordinal < values().length) {
-            return values()[ordinal];
+    /**
+     * Deserialize from enum name string.
+     */
+    public static ComparisonOperator fromName(String name) {
+        try {
+            return valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return LESS_THAN;
         }
-        return LESS_THAN;
+    }
+
+    /**
+     * Get the next operator in the cycle (for UI cycling).
+     */
+    @SuppressWarnings("EnumOrdinal")  // Safe: cycling through enum values within the enum itself
+    public ComparisonOperator next() {
+        ComparisonOperator[] values = values();
+        return values[(this.ordinal() + 1) % values.length];
     }
 }

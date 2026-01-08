@@ -33,10 +33,13 @@ public record OpenAutorequesterPacket(BlockPos pos) implements CustomPacketPaylo
         return new OpenAutorequesterPacket(buf.readBlockPos());
     }
 
+    @SuppressWarnings("FutureReturnValueIgnored")  // NeoForge handles exceptions internally
     public static void handle(OpenAutorequesterPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = (ServerPlayer) context.player();
-            if (player == null) return;
+            if (player == null) {
+                return;
+            }
 
             LOG.info("[OpenAutorequesterPacket] SERVER received request to open menu at {}", packet.pos);
 

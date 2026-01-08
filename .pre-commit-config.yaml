@@ -1,0 +1,107 @@
+# Pre-commit hooks for AE2 Autorequester
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Basic file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.patch$
+      - id: end-of-file-fixer
+        exclude: \.patch$
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+
+  # Gradle-based checks (local hooks)
+  - repo: local
+    hooks:
+      # Code formatting check (fast)
+      - id: spotless-check
+        name: Spotless Format Check
+        entry: ./gradlew spotlessCheck --no-daemon -q
+        language: system
+        pass_filenames: false
+        files: \.(java|gradle)$
+        stages: [pre-commit]
+
+      # Apply formatting automatically (optional, use with --hook-stage manual)
+      - id: spotless-apply
+        name: Spotless Format Apply
+        entry: ./gradlew spotlessApply --no-daemon -q
+        language: system
+        pass_filenames: false
+        files: \.(java|gradle)$
+        stages: [manual]
+
+      # Checkstyle (code style enforcement)
+      - id: checkstyle
+        name: Checkstyle
+        entry: ./gradlew checkstyleMain --no-daemon -q
+        language: system
+        pass_filenames: false
+        files: \.java$
+        stages: [pre-commit]
+
+      # SpotBugs (static analysis)
+      - id: spotbugs
+        name: SpotBugs
+        entry: ./gradlew spotbugsMain --no-daemon -q
+        language: system
+        pass_filenames: false
+        files: \.java$
+        stages: [pre-commit]
+
+      # Compile check with Error Prone
+      - id: compile-check
+        name: Compile with Error Prone
+        entry: ./gradlew compileJava --no-daemon -q
+        language: system
+        pass_filenames: false
+        files: \.java$
+        stages: [pre-commit]
+
+      # Resource validation
+      - id: validate-resources
+        name: Validate JSON Resources
+        entry: ./gradlew validateResources --no-daemon -q
+        language: system
+        pass_filenames: false
+        files: \.(json)$
+        stages: [pre-commit]
+
+      # Unit tests (can be slow, optional for pre-push)
+      - id: unit-tests
+        name: Unit Tests
+        entry: ./gradlew test --no-daemon -q
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # OWASP Dependency Check (slow, only on pre-push or manual)
+      - id: owasp-check
+        name: OWASP Dependency Check
+        entry: ./gradlew dependencyCheckAnalyze --no-daemon -q
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
+      # Verify data generators are up-to-date (slow, requires Minecraft)
+      - id: verify-datagen
+        name: Verify DataGen
+        entry: ./gradlew verifyDataGen --no-daemon -q
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
+# CI-specific configuration
+ci:
+  autofix_prs: false
+  autoupdate_schedule: monthly

@@ -42,10 +42,18 @@ public enum RuleStatus {
         return this == READY || this == CRAFTING;
     }
 
-    public static RuleStatus fromOrdinal(int ordinal) {
-        if (ordinal >= 0 && ordinal < values().length) {
-            return values()[ordinal];
+    /**
+     * Deserialize from enum name string.
+     * Safer than ordinal because it won't break if enum is reordered.
+     */
+    public static RuleStatus fromName(String name) {
+        if (name == null) {
+            return IDLE;
         }
-        return IDLE;
+        try {
+            return valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return IDLE;
+        }
     }
 }

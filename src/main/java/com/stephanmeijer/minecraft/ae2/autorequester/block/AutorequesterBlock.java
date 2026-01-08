@@ -108,7 +108,7 @@ public final class AutorequesterBlock extends BaseEntityBlock {
                                                Player player, InteractionHand hand, BlockHitResult hitResult) {
         // Check if player is using a wrench (shift + wrench = dismantle)
         if (player.isShiftKeyDown() && isWrench(stack)) {
-            if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+            if (!level.isClientSide() && level instanceof ServerLevel) {
                 // Drop the block with NBT preserved
                 ItemStack drop = new ItemStack(this);
                 BlockEntity blockEntity = level.getBlockEntity(pos);

@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("RuleStatus")
 class RuleStatusTest {
@@ -75,20 +77,21 @@ class RuleStatusTest {
     }
 
     @Nested
-    @DisplayName("fromOrdinal")
-    class FromOrdinalTests {
+    @DisplayName("fromName")
+    class FromNameTests {
         @ParameterizedTest
         @EnumSource(RuleStatus.class)
-        @DisplayName("returns correct status for valid ordinals")
-        void validOrdinals(RuleStatus status) {
-            assertEquals(status, RuleStatus.fromOrdinal(status.ordinal()));
+        @DisplayName("returns correct status for valid names")
+        void validNames(RuleStatus status) {
+            assertEquals(status, RuleStatus.fromName(status.name()));
         }
 
         @Test
-        @DisplayName("returns IDLE for invalid ordinals")
-        void invalidOrdinals() {
-            assertEquals(RuleStatus.IDLE, RuleStatus.fromOrdinal(-1));
-            assertEquals(RuleStatus.IDLE, RuleStatus.fromOrdinal(100));
+        @DisplayName("returns IDLE for invalid names")
+        void invalidNames() {
+            assertEquals(RuleStatus.IDLE, RuleStatus.fromName("INVALID"));
+            assertEquals(RuleStatus.IDLE, RuleStatus.fromName(""));
+            assertEquals(RuleStatus.IDLE, RuleStatus.fromName(null));
         }
     }
 

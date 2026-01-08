@@ -59,10 +59,13 @@ public record SyncRulesPacket(BlockPos pos, List<CraftingRule> rules) implements
         return new SyncRulesPacket(pos, rules);
     }
 
+    @SuppressWarnings("FutureReturnValueIgnored")  // NeoForge handles exceptions internally
     public static void handle(SyncRulesPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = (ServerPlayer) context.player();
-            if (player == null) return;
+            if (player == null) {
+                return;
+            }
 
             LOG.info("[SyncRulesPacket] SERVER received {} rules at pos {}", packet.rules.size(), packet.pos);
             for (int i = 0; i < packet.rules.size(); i++) {

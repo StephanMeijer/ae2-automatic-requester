@@ -148,7 +148,7 @@ public class CraftingRule {
         tag.putString("targetItem", itemId.toString());
         tag.putInt("batchSize", batchSize);
         tag.putBoolean("enabled", enabled);
-        tag.putInt("status", status.ordinal());
+        tag.putString("status", status.name());
         tag.putLong("lastTriggered", lastTriggered);
 
         ListTag conditionList = new ListTag();
@@ -171,7 +171,7 @@ public class CraftingRule {
         rule.targetItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemId));
         rule.batchSize = tag.getInt("batchSize");
         rule.enabled = tag.getBoolean("enabled");
-        rule.status = RuleStatus.fromOrdinal(tag.getInt("status"));
+        rule.status = RuleStatus.fromName(tag.getString("status"));
         rule.lastTriggered = tag.getLong("lastTriggered");
 
         ListTag conditionList = tag.getList("conditions", Tag.TAG_COMPOUND);

@@ -64,7 +64,7 @@ public class CraftingCondition {
         CompoundTag tag = new CompoundTag();
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
         tag.putString("item", itemId.toString());
-        tag.putInt("operator", operator.ordinal());
+        tag.putString("operator", operator.name());
         tag.putLong("threshold", threshold);
         return tag;
     }
@@ -74,7 +74,7 @@ public class CraftingCondition {
 
         String itemId = tag.getString("item");
         condition.item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemId));
-        condition.operator = ComparisonOperator.fromOrdinal(tag.getInt("operator"));
+        condition.operator = ComparisonOperator.fromName(tag.getString("operator"));
         condition.threshold = tag.getLong("threshold");
 
         return condition;
