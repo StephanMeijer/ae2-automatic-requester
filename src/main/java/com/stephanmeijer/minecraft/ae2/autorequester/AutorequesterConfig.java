@@ -84,6 +84,30 @@ public class AutorequesterConfig {
         return max == -1 || currentConditionCount < max;
     }
 
+    /**
+     * Check if a batch size limit is configured.
+     * @return true if limit is set (not -1)
+     */
+    public static boolean hasBatchSizeLimit() {
+        return getMaxBatchSize() != -1;
+    }
+
+    /**
+     * Check if a rules limit is configured.
+     * @return true if limit is set (not -1)
+     */
+    public static boolean hasRulesLimit() {
+        return getMaxRules() != -1;
+    }
+
+    /**
+     * Check if a conditions limit is configured.
+     * @return true if limit is set (not -1)
+     */
+    public static boolean hasConditionsLimit() {
+        return getMaxConditions() != -1;
+    }
+
     // Legacy static fields for compatibility (updated on config load)
     public static int checkInterval = 20;
     public static int maxBatchSize = -1;

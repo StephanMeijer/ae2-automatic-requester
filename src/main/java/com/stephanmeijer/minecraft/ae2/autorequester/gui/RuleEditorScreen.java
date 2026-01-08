@@ -154,6 +154,26 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         batchSizeField.setMaxLength(10);
         batchSizeField.setValue(String.valueOf(editingRule.getBatchSize()));
         batchSizeField.setFilter(s -> s.isEmpty() || s.matches("\\d+"));
+        if (AutorequesterConfig.hasBatchSizeLimit()) {
+            batchSizeField.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.batch_size_limit", AutorequesterConfig.getMaxBatchSize())));
+        }
+        // Add responder to clamp value to valid range (1 to max)
+        batchSizeField.setResponder(value -> {
+            if (!value.isEmpty()) {
+                try {
+                    int parsed = Integer.parseInt(value);
+                    int maxBatchSize = AutorequesterConfig.getMaxBatchSize();
+                    if (parsed < 1) {
+                        batchSizeField.setValue("1");
+                    } else if (maxBatchSize != -1 && parsed > maxBatchSize) {
+                        batchSizeField.setValue(String.valueOf(maxBatchSize));
+                    }
+                } catch (NumberFormatException ignored) {
+                    // Filter already ensures only digits
+                }
+            }
+        });
         addRenderableWidget(batchSizeField);
 
         // Bottom button row
@@ -163,7 +183,6 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         // Add condition button
         addConditionButton = addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddCondition())
                 .bounds(buttonX, bottomY, BUTTON_SIZE, BUTTON_SIZE)
-                .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.add_condition")))
                 .build());
         buttonX += BUTTON_SIZE + BUTTON_SPACING;
 
@@ -184,7 +203,6 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         // Duplicate condition button
         duplicateConditionButton = addRenderableWidget(Button.builder(Component.literal("\u29C9"), button -> onDuplicateCondition())
                 .bounds(buttonX, bottomY, BUTTON_SIZE, BUTTON_SIZE)
-                .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.duplicate_condition")))
                 .build());
         buttonX += BUTTON_SIZE + 10;
 
@@ -252,6 +270,25 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         duplicateConditionButton.active = hasSelection && canAddCondition; // Duplicate also needs room for new condition
         moveUpConditionButton.active = canMoveUp;
         moveDownConditionButton.active = canMoveDown;
+
+        // Update tooltips dynamically - show "(max: n)" only when at limit
+        if (!canAddCondition && AutorequesterConfig.hasConditionsLimit()) {
+            addConditionButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.add_condition_limit", AutorequesterConfig.getMaxConditions())));
+            duplicateConditionButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.duplicate_condition_limit", AutorequesterConfig.getMaxConditions())));
+        } else {
+            addConditionButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.add_condition")));
+            duplicateConditionButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.duplicate_condition")));
+        }
+
+        // Clamp scroll offset to valid range
+        int maxScroll = Math.max(0, conditions.size() - MAX_VISIBLE_CONDITIONS);
+        if (conditionScrollOffset > maxScroll) {
+            conditionScrollOffset = maxScroll;
+        }
 
         // Can only save if target item is set
         saveButton.active = !editingRule.getTargetItemStack().isEmpty();

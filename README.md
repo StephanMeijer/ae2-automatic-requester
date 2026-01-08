@@ -93,14 +93,26 @@ Shift + right-click with any wrench tagged `c:tools/wrench` to pick up the block
 
 ## Configuration
 
-Server configuration options in `serverconfig/ae2_autorequester-server.toml`:
+Server configuration file: `config/ae2_autorequester-server.toml`
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `maxRulesPerBlock` | 16 | Maximum rules per autorequester |
-| `maxConditionsPerRule` | 8 | Maximum conditions per rule |
-| `checkInterval` | 20 | Ticks between condition checks (20 = 1 second) |
-| `maxBatchSize` | 10000 | Maximum batch size allowed |
+```toml
+# Tick interval for checking conditions (20 = 1 second)
+checkInterval = 20
+
+# Maximum batch size allowed per crafting request (-1 = unlimited)
+maxBatchSize = -1
+
+# Maximum number of rules per autorequester block (-1 = unlimited)
+maxRules = -1
+
+# Maximum number of conditions per rule (-1 = unlimited)
+maxConditions = -1
+
+# Whether the autorequester requires a channel to operate
+requiresChannel = true
+```
+
+When limits are configured (not -1), the GUI displays them in tooltips.
 
 ## Compatibility
 

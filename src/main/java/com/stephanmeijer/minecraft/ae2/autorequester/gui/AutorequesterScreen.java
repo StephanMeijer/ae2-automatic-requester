@@ -3,6 +3,7 @@ package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.stephanmeijer.minecraft.ae2.autorequester.AutorequesterConfig;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingRule;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.RuleStatus;
 import com.stephanmeijer.minecraft.ae2.autorequester.network.OpenAutorequesterPacket;
@@ -73,7 +74,6 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         // Add Rule button
         addRuleButton = addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddRule())
                 .bounds(leftPos + 8, buttonY, 20, 20)
-                .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.add_rule")))
                 .build());
 
         // Edit button
@@ -91,7 +91,6 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         // Duplicate button
         duplicateButton = addRenderableWidget(Button.builder(Component.literal("⧉"), button -> onDuplicateRule())
                 .bounds(leftPos + 80, buttonY, 20, 20)
-                .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.duplicate_rule")))
                 .build());
 
         // Move up button
@@ -112,15 +111,35 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
 
     private void updateButtonStates() {
         boolean hasSelection = selectedRuleIndex >= 0 && selectedRuleIndex < menu.getRules().size();
+        boolean canAddRule = menu.canAddRule();
         boolean canMoveUp = hasSelection && selectedRuleIndex > 0;
         boolean canMoveDown = hasSelection && selectedRuleIndex < menu.getRules().size() - 1;
 
-        addRuleButton.active = menu.canAddRule();
+        addRuleButton.active = canAddRule;
         editButton.active = hasSelection;
         deleteButton.active = hasSelection;
-        duplicateButton.active = hasSelection && menu.canAddRule(); // Duplicate also needs room for new rule
+        duplicateButton.active = hasSelection && canAddRule; // Duplicate also needs room for new rule
         moveUpButton.active = canMoveUp;
         moveDownButton.active = canMoveDown;
+
+        // Update tooltips dynamically - show "(max: n)" only when at limit
+        if (!canAddRule && AutorequesterConfig.hasRulesLimit()) {
+            addRuleButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.add_rule_limit", AutorequesterConfig.getMaxRules())));
+            duplicateButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.duplicate_rule_limit", AutorequesterConfig.getMaxRules())));
+        } else {
+            addRuleButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.add_rule")));
+            duplicateButton.setTooltip(Tooltip.create(
+                    Component.translatable("ae2_autorequester.gui.duplicate_rule")));
+        }
+
+        // Clamp scroll offset to valid range
+        int maxScroll = Math.max(0, menu.getRules().size() - MAX_VISIBLE_RULES);
+        if (scrollOffset > maxScroll) {
+            scrollOffset = maxScroll;
+        }
     }
 
     @Override
@@ -467,6 +486,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             if (selectedRuleIndex >= menu.getRules().size()) {
                 selectedRuleIndex = menu.getRules().size() - 1;
             }
+            updateButtonStates();
         }
     }
 
@@ -474,6 +494,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         if (selectedRuleIndex >= 0 && selectedRuleIndex < menu.getRules().size()) {
             menu.duplicateRule(selectedRuleIndex);
             selectedRuleIndex++;
+            updateButtonStates();
         }
     }
 
@@ -492,15 +513,16 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     }
 
     /**
-     * Get list of item names that are missing patterns (enabled rules with MISSING_PATTERN status).
+     * Get list of unique item names that are missing patterns (enabled rules with MISSING_PATTERN status).
      */
     private List<String> getMissingPatternItems() {
-        List<String> items = new ArrayList<>();
+        // Use LinkedHashSet to deduplicate while preserving insertion order
+        java.util.Set<String> items = new java.util.LinkedHashSet<>();
         for (CraftingRule rule : menu.getRules()) {
             if (rule.isEnabled() && rule.getStatus() == RuleStatus.MISSING_PATTERN) {
                 items.add(rule.getDisplayName());
             }
         }
-        return items;
+        return new ArrayList<>(items);
     }
 }

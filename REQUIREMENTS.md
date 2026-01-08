@@ -217,20 +217,30 @@ Each condition consists of:
 
 ## Configuration (Server Config)
 
+Configuration file: `config/ae2_autorequester-server.toml`
+
 ```toml
-[autorequester]
-# Maximum rules per autorequester block
-maxRulesPerBlock = 16
-
-# Maximum conditions per rule
-maxConditionsPerRule = 8
-
 # Tick interval for checking conditions (20 = 1 second)
+# Range: 1 ~ 1200
 checkInterval = 20
 
-# Maximum batch size allowed
-maxBatchSize = 10000
+# Maximum batch size allowed per crafting request
+# Set to -1 for unlimited
+# Range: -1 ~ 2147483647
+maxBatchSize = -1
 
-# Channel requirement
+# Maximum number of rules per autorequester block
+# Set to -1 for unlimited
+# Range: -1 ~ 2147483647
+maxRules = -1
+
+# Maximum number of conditions per rule
+# Set to -1 for unlimited
+# Range: -1 ~ 2147483647
+maxConditions = -1
+
+# Whether the autorequester requires a channel to operate
 requiresChannel = true
 ```
+
+When limits are configured (not -1), the GUI shows the limit in tooltips.
