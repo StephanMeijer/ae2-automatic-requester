@@ -100,10 +100,27 @@ Prefer event-based/pub-sub patterns over polling:
 
 Prefer data-driven approaches over long if-else or switch chains. Extract varying parts into data structures.
 
+## Code Formatting
+
+This project uses [Spotless](https://github.com/diffplug/spotless) for code formatting. CI will fail if code is not properly formatted.
+
+**Check formatting:**
+```bash
+./gradlew spotlessCheck
+```
+
+**Auto-fix formatting issues:**
+```bash
+./gradlew spotlessApply
+```
+
+Always run `spotlessApply` before committing to ensure consistent formatting.
+
 ## Pull Requests
 
 1. Fork the repository
 2. Create a feature branch from `main`
 3. Make your changes following the coding guidelines
-4. Ensure the build passes: `./gradlew build`
-5. Submit a pull request with a clear description
+4. Run `./gradlew spotlessApply` to fix formatting
+5. Ensure the build passes: `./gradlew build`
+6. Submit a pull request with a clear description
