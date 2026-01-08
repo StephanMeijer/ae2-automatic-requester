@@ -6,7 +6,7 @@ package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 public class DoubleClickHandler {
     private static final long DOUBLE_CLICK_THRESHOLD_MS = 500;
 
-    private long lastClickTime = 0;
+    private long lastClickTime;
     private int lastClickedIndex = -1;
 
     /**

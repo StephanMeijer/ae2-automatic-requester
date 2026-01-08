@@ -89,7 +89,7 @@ public final class AutorequesterBlockEntity extends BlockEntity implements MenuP
     // ==================== Instance Fields ====================
 
     private final List<CraftingRule> rules = new ArrayList<>();
-    private boolean gridReady = false;
+    private boolean gridReady;
 
     // AE2 Grid Node - manages connection to ME network
     private final IManagedGridNode mainNode;
@@ -111,7 +111,7 @@ public final class AutorequesterBlockEntity extends BlockEntity implements MenuP
     private final Map<UUID, Future<ICraftingPlan>> pendingCalculations = new HashMap<>();
 
     // Tick counter for throttled operations
-    private int tickCounter = 0;
+    private int tickCounter;
 
     public AutorequesterBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlocks.AUTOREQUESTER_BLOCK_ENTITY.get(), pos, blockState);

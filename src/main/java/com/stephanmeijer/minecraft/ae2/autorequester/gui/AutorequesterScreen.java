@@ -36,10 +36,10 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     private static final int SCROLLBAR_X = RULE_LIST_X + RULE_LIST_WIDTH + 2;
     private static final int SCROLLBAR_WIDTH = 10;
 
-    private int scrollOffset = 0;
+    private int scrollOffset;
     private int selectedRuleIndex = -1;
     private final DoubleClickHandler ruleDoubleClick = new DoubleClickHandler();
-    private boolean isDraggingScrollbar = false;
+    private boolean isDraggingScrollbar;
 
     // Button references for enabling/disabling
     private Button addRuleButton;
@@ -187,7 +187,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             }
 
             // Draw rule entry
-            renderRuleEntry(guiGraphics, rule, leftPos + RULE_LIST_X + 2, y + 2, mouseX, mouseY);
+            renderRuleEntry(guiGraphics, rule, leftPos + RULE_LIST_X + 2, y + 2);
         }
 
         // Status icon (top-right corner, 12x12) - Priority: error > warning > success
@@ -231,7 +231,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         }
     }
 
-    private void renderRuleEntry(GuiGraphics guiGraphics, CraftingRule rule, int x, int y, int mouseX, int mouseY) {
+    private void renderRuleEntry(GuiGraphics guiGraphics, CraftingRule rule, int x, int y) {
         // Status icon (colored square) - green for enabled, red for disabled
         int statusColor = rule.isEnabled() ? 0x55FF55 : 0xFF5555;
         guiGraphics.fill(x, y + 4, x + 12, y + 16, 0xFF000000);

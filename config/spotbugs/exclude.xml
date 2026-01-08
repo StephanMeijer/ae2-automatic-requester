@@ -42,18 +42,84 @@
         <Class name="~.*\.compat\.emi\.EmiPlugin"/>
     </Match>
 
-    <!-- Exposing internal representation is acceptable for Minecraft mod internal APIs -->
-    <!-- These getters are used for read-only access in practice, defensive copying would be wasteful -->
-    <Match>
-        <Bug pattern="EI_EXPOSE_REP"/>
-    </Match>
-    <Match>
-        <Bug pattern="EI_EXPOSE_REP2"/>
-    </Match>
-
-    <!-- IPayloadContext.player() is annotated @Nonnull in NeoForge API, but we keep null checks for safety -->
+    <!-- IPayloadContext.player() is annotated @Nonnull in NeoForge API -->
     <Match>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
         <Class name="~.*Packet"/>
+    </Match>
+
+    <!--
+        EI_EXPOSE_REP / EI_EXPOSE_REP2: Exposing internal representation
+
+        FALSE POSITIVES in Minecraft modding context:
+        - Item objects are registry singletons (effectively immutable)
+        - BlockEntity references are required for menu/GUI integration
+        - IGridNode and IStackWatcher are AE2 API callbacks (not our data)
+        - SyncRulesPacket.rules() returns unmodifiable list (SpotBugs can't detect this)
+    -->
+
+    <!-- Item getters/setters - Item is a registry singleton, effectively immutable -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Or>
+            <Method name="getItem"/>
+            <Method name="getTargetItem"/>
+        </Or>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Or>
+            <Method name="setItem"/>
+            <Method name="setTargetItem"/>
+            <Method name="~.*&lt;init&gt;.*"/>
+        </Or>
+        <Or>
+            <Class name="~.*CraftingCondition"/>
+            <Class name="~.*CraftingRule"/>
+        </Or>
+    </Match>
+
+    <!-- Internal AE2 integration - these are API callbacks, not our data -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*AutorequesterBlockEntity"/>
+        <Method name="getMainNode"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="~.*AutorequesterBlockEntity"/>
+        <Method name="updateWatcher"/>
+    </Match>
+
+    <!-- Menu needs direct BlockEntity reference for GUI synchronization -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*Menu"/>
+        <Method name="getBlockEntity"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="~.*Menu"/>
+    </Match>
+
+    <!-- SyncRulesPacket returns unmodifiable list (SpotBugs can't detect this) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*SyncRulesPacket"/>
+    </Match>
+
+    <!--
+        Mutable collection accessors used for editing.
+        These are intentionally mutable to support the editing workflow.
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*AutorequesterBlockEntity"/>
+        <Method name="getRules"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+        <Class name="~.*CraftingRule"/>
+        <Method name="getConditions"/>
     </Match>
 </FindBugsFilter>

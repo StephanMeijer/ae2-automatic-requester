@@ -74,7 +74,6 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private static CraftingRule contextRule;
     private static Consumer<CraftingRule> contextOnSave;
     private static Runnable contextOnCancel;
-    private static Component contextTitle;
 
     /**
      * Opens the rule editor screen.
@@ -91,7 +90,6 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         contextRule = rule.copyForEditing();
         contextOnSave = onSave;
         contextOnCancel = onCancel;
-        contextTitle = title;
 
         RuleEditorMenu menu = new RuleEditorMenu(0, mc.player.getInventory());
         mc.setScreen(new RuleEditorScreen(menu, mc.player.getInventory(), title));
@@ -110,9 +108,9 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private EditBox nameField;
     private EditBox batchSizeField;
     private final List<CraftingCondition> conditions = new ArrayList<>();
-    private int conditionScrollOffset = 0;
+    private int conditionScrollOffset;
     private int selectedConditionIndex = -1;
-    private boolean isDraggingScrollbar = false;
+    private boolean isDraggingScrollbar;
 
     // Buttons
     private Button addConditionButton;
@@ -253,7 +251,6 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
             contextRule = null;
             contextOnSave = null;
             contextOnCancel = null;
-            contextTitle = null;
         }
         // If context is null, we're being restored after condition editor - state already set
     }
@@ -418,7 +415,6 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         contextRule = editingRule;
         contextOnSave = onSave;
         contextOnCancel = onCancel;
-        contextTitle = getTitle();
 
         // Reopen
         Minecraft mc = Minecraft.getInstance();

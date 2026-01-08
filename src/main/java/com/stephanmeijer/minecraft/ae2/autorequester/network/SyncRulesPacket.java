@@ -1,6 +1,7 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.network;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.stephanmeijer.minecraft.ae2.autorequester.block.AutorequesterBlockEntity;
@@ -22,6 +23,13 @@ import org.slf4j.LoggerFactory;
  * Packet sent from client to server to sync all rules for a block entity.
  */
 public record SyncRulesPacket(BlockPos pos, List<CraftingRule> rules) implements CustomPacketPayload {
+    /**
+     * Compact constructor that creates a defensive copy of the rules list.
+     */
+    public SyncRulesPacket {
+        rules = Collections.unmodifiableList(new ArrayList<>(rules));
+    }
+
     private static final Logger LOG = LoggerFactory.getLogger(SyncRulesPacket.class);
 
     public static final Type<SyncRulesPacket> TYPE = new Type<>(ModNetworking.id("sync_rules"));

@@ -42,7 +42,7 @@ public class JeiPlugin implements IModPlugin {
     /**
      * Empty handler for screens with no ghost ingredient targets.
      */
-    private static class EmptyGhostIngredientHandler<T extends Screen> implements IGhostIngredientHandler<T> {
+    private static final class EmptyGhostIngredientHandler<T extends Screen> implements IGhostIngredientHandler<T> {
         @Override
         public <I> List<Target<I>> getTargetsTyped(T screen, ITypedIngredient<I> ingredient, boolean doStart) {
             return List.of();
@@ -57,7 +57,7 @@ public class JeiPlugin implements IModPlugin {
      * Generic ghost ingredient handler for screens implementing IGhostItemTarget.
      * Uses the shared interface to provide drop targets.
      */
-    private static class GhostItemTargetHandler<T extends Screen & IGhostItemTarget> implements IGhostIngredientHandler<T> {
+    private static final class GhostItemTargetHandler<T extends Screen & IGhostItemTarget> implements IGhostIngredientHandler<T> {
 
         @Override
         public <I> List<Target<I>> getTargetsTyped(T screen, ITypedIngredient<I> ingredient, boolean doStart) {
@@ -83,7 +83,7 @@ public class JeiPlugin implements IModPlugin {
     /**
      * Target for an item slot that accepts ghost ingredients via IGhostItemTarget.
      */
-    private static class ItemSlotTarget<I> implements IGhostIngredientHandler.Target<I> {
+    private static final class ItemSlotTarget<I> implements IGhostIngredientHandler.Target<I> {
         private final Rect2i area;
         private final IGhostItemTarget target;
 

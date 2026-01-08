@@ -1,5 +1,14 @@
 # Lefthook configuration
 # https://github.com/evilmartians/lefthook
+#
+# This configuration is LOCAL TO THIS REPOSITORY ONLY.
+# Hooks are installed in .git/hooks/ and only affect this repo.
+#
+# To install hooks: lefthook install
+# To uninstall: lefthook uninstall
+#
+# For personal customizations not shared with the team,
+# create lefthook-local.yml and add it to .gitignore
 
 pre-commit:
   commands:

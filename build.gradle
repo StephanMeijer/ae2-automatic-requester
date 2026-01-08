@@ -60,9 +60,6 @@ tasks.withType(JavaCompile).configureEach {
         disableWarningsInGeneratedCode = true
         allErrorsAsWarnings = false
 
-        // Disable checks that are too noisy for Minecraft mod development
-        disable('UnusedVariable')     // Noisy for GUI code with event handlers
-
         // Promote useful checks to errors
         error('MissingOverride')
         error('EqualsHashCode')
@@ -73,6 +70,20 @@ tasks.withType(JavaCompile).configureEach {
         error('MissingCasesInEnumSwitch')
         error('StringCaseLocaleUsage')
         error('EnumOrdinal')
+
+        // Additional strict checks
+        error('UnusedVariable')
+        error('DefaultCharset')
+        error('UnnecessaryParentheses')
+        error('BadImport')
+        error('ConstantField')
+        error('DeadException')
+        error('LockNotBeforeTry')
+        error('OperatorPrecedence')
+        error('ProtectedMembersInFinalClass')
+        error('StaticAssignmentInConstructor')
+        error('UnusedMethod')
+        error('UnusedNestedClass')
     }
 }
 

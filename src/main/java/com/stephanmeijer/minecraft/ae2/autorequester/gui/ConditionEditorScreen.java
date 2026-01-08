@@ -55,7 +55,6 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
     private static CraftingCondition contextCondition;
     private static Consumer<CraftingCondition> contextOnSave;
     private static Runnable contextOnCancel;
-    private static Component contextTitle;
 
     /**
      * Opens the condition editor screen.
@@ -73,7 +72,6 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
         contextCondition = condition.copy();
         contextOnSave = onSave;
         contextOnCancel = onCancel;
-        contextTitle = title;
 
         ConditionEditorMenu menu = new ConditionEditorMenu(0, mc.player.getInventory());
         mc.setScreen(new ConditionEditorScreen(menu, mc.player.getInventory(), title));
@@ -193,7 +191,6 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
             contextCondition = null;
             contextOnSave = null;
             contextOnCancel = null;
-            contextTitle = null;
         }
     }
 
