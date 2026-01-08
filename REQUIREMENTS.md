@@ -234,4 +234,3 @@ maxBatchSize = 10000
 # Channel requirement
 requiresChannel = true
 ```
-
