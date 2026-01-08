@@ -1,5 +1,8 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingRule;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.RuleStatus;
 import com.stephanmeijer.minecraft.ae2.autorequester.network.OpenAutorequesterPacket;
@@ -11,11 +14,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMenu> {
     private static final Logger LOG = LoggerFactory.getLogger(AutorequesterScreen.class);
@@ -41,6 +41,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     private boolean isDraggingScrollbar = false;
 
     // Button references for enabling/disabling
+    private Button addRuleButton;
     private Button editButton;
     private Button deleteButton;
     private Button duplicateButton;
@@ -69,8 +70,8 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
 
         int buttonY = topPos + imageHeight - 28;
 
-        // Add Rule button (always enabled)
-        addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddRule())
+        // Add Rule button
+        addRuleButton = addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddRule())
                 .bounds(leftPos + 8, buttonY, 20, 20)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.add_rule")))
                 .build());
@@ -114,9 +115,10 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         boolean canMoveUp = hasSelection && selectedRuleIndex > 0;
         boolean canMoveDown = hasSelection && selectedRuleIndex < menu.getRules().size() - 1;
 
+        addRuleButton.active = menu.canAddRule();
         editButton.active = hasSelection;
         deleteButton.active = hasSelection;
-        duplicateButton.active = hasSelection;
+        duplicateButton.active = hasSelection && menu.canAddRule(); // Duplicate also needs room for new rule
         moveUpButton.active = canMoveUp;
         moveDownButton.active = canMoveDown;
     }
@@ -169,24 +171,35 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             renderRuleEntry(guiGraphics, rule, leftPos + RULE_LIST_X + 2, y + 2, mouseX, mouseY);
         }
 
-        // Network status icon (top-right corner, 12x12)
-        int networkIconX = leftPos + imageWidth - 20;
-        int networkIconY = topPos + 4;
+        // Status icon (top-right corner, 12x12) - Priority: error > warning > success
+        int statusIconX = leftPos + imageWidth - 20;
+        int statusIconY = topPos + 4;
+        List<String> missingPatternItems = getMissingPatternItems();
+
         if (!menu.isNetworkConnected()) {
-            // Pulsing effect for error - brighter/darker based on time
+            // Error icon (red) - network disconnected
             long time = System.currentTimeMillis();
             float pulse = (float) (Math.sin(time / 200.0) * 0.3 + 0.7);
             int red = (int) (255 * pulse);
             int errorColor = 0xFF000000 | (red << 16) | 0x2222;
 
-            // Error icon (12x12)
-            guiGraphics.fill(networkIconX, networkIconY, networkIconX + 12, networkIconY + 12, 0xFF000000);
-            guiGraphics.fill(networkIconX + 1, networkIconY + 1, networkIconX + 11, networkIconY + 11, errorColor);
-            guiGraphics.drawCenteredString(font, "!", networkIconX + 6, networkIconY + 2, 0xFFFFFF);
+            guiGraphics.fill(statusIconX, statusIconY, statusIconX + 12, statusIconY + 12, 0xFF000000);
+            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + 11, statusIconY + 11, errorColor);
+            guiGraphics.drawCenteredString(font, "!", statusIconX + 6, statusIconY + 2, 0xFFFFFF);
+        } else if (!missingPatternItems.isEmpty()) {
+            // Warning icon (yellow) - missing patterns
+            long time = System.currentTimeMillis();
+            float pulse = (float) (Math.sin(time / 300.0) * 0.2 + 0.8);
+            int yellow = (int) (255 * pulse);
+            int warningColor = 0xFF000000 | (yellow << 16) | (yellow << 8);
+
+            guiGraphics.fill(statusIconX, statusIconY, statusIconX + 12, statusIconY + 12, 0xFF000000);
+            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + 11, statusIconY + 11, warningColor);
+            guiGraphics.drawCenteredString(font, "!", statusIconX + 6, statusIconY + 2, 0x000000);
         } else {
-            // Connected icon (12x12)
-            guiGraphics.fill(networkIconX, networkIconY, networkIconX + 12, networkIconY + 12, 0xFF000000);
-            guiGraphics.fill(networkIconX + 1, networkIconY + 1, networkIconX + 11, networkIconY + 11, 0xFF55FF55);
+            // Success icon (green) - all good
+            guiGraphics.fill(statusIconX, statusIconY, statusIconX + 12, statusIconY + 12, 0xFF000000);
+            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + 11, statusIconY + 11, 0xFF55FF55);
         }
 
         // Empty list message
@@ -263,12 +276,21 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             }
         }
 
-        // Network status tooltip
-        int networkIconX = leftPos + imageWidth - 20;
-        int networkIconY = topPos + 4;
-        if (mouseX >= networkIconX && mouseX < networkIconX + 12 && mouseY >= networkIconY && mouseY < networkIconY + 12) {
+        // Status icon tooltip - Priority: error > warning > success
+        int statusIconX = leftPos + imageWidth - 20;
+        int statusIconY = topPos + 4;
+        if (mouseX >= statusIconX && mouseX < statusIconX + 12 && mouseY >= statusIconY && mouseY < statusIconY + 12) {
+            List<String> missingPatternItems = getMissingPatternItems();
+
             if (!menu.isNetworkConnected()) {
                 guiGraphics.renderTooltip(font, Component.translatable("ae2_autorequester.gui.no_network"), mouseX, mouseY);
+            } else if (!missingPatternItems.isEmpty()) {
+                List<Component> tooltip = new ArrayList<>();
+                tooltip.add(Component.translatable("ae2_autorequester.gui.missing_patterns").withStyle(s -> s.withColor(0xFFFF00)));
+                for (String itemName : missingPatternItems) {
+                    tooltip.add(Component.literal("  - " + itemName).withStyle(s -> s.withColor(0xAAAAAA)));
+                }
+                guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
             } else {
                 guiGraphics.renderTooltip(font, Component.translatable("ae2_autorequester.gui.network_connected"), mouseX, mouseY);
             }
@@ -467,5 +489,18 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             menu.moveRuleDown(selectedRuleIndex);
             selectedRuleIndex++;
         }
+    }
+
+    /**
+     * Get list of item names that are missing patterns (enabled rules with MISSING_PATTERN status).
+     */
+    private List<String> getMissingPatternItems() {
+        List<String> items = new ArrayList<>();
+        for (CraftingRule rule : menu.getRules()) {
+            if (rule.isEnabled() && rule.getStatus() == RuleStatus.MISSING_PATTERN) {
+                items.add(rule.getDisplayName());
+            }
+        }
+        return items;
     }
 }

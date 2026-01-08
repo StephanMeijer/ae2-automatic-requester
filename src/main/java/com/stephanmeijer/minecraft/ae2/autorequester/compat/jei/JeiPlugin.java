@@ -1,6 +1,10 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.compat.jei;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.stephanmeijer.minecraft.ae2.autorequester.AE2Autorequester;
+import com.stephanmeijer.minecraft.ae2.autorequester.compat.IGhostItemTarget;
 import com.stephanmeijer.minecraft.ae2.autorequester.gui.AutorequesterScreen;
 import com.stephanmeijer.minecraft.ae2.autorequester.gui.ConditionEditorScreen;
 import com.stephanmeijer.minecraft.ae2.autorequester.gui.RuleEditorScreen;
@@ -12,10 +16,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * JEI plugin for ghost ingredient support in Autorequester screens.
@@ -33,14 +33,14 @@ public class JeiPlugin implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
-        // Register ghost ingredient handlers for each screen type
+        // Register ghost ingredient handlers for screens implementing IGhostItemTarget
         registration.addGhostIngredientHandler(AutorequesterScreen.class, new EmptyGhostIngredientHandler<>());
-        registration.addGhostIngredientHandler(RuleEditorScreen.class, new RuleEditorGhostIngredientHandler());
-        registration.addGhostIngredientHandler(ConditionEditorScreen.class, new ConditionEditorGhostIngredientHandler());
+        registration.addGhostIngredientHandler(RuleEditorScreen.class, new GhostItemTargetHandler<>());
+        registration.addGhostIngredientHandler(ConditionEditorScreen.class, new GhostItemTargetHandler<>());
     }
 
     /**
-     * Empty handler for AutorequesterScreen - no ghost ingredient targets on main screen.
+     * Empty handler for screens with no ghost ingredient targets.
      */
     private static class EmptyGhostIngredientHandler<T extends Screen> implements IGhostIngredientHandler<T> {
         @Override
@@ -54,13 +54,13 @@ public class JeiPlugin implements IModPlugin {
     }
 
     /**
-     * Ghost ingredient handler for RuleEditorScreen.
-     * Provides a drop target for the target item slot.
+     * Generic ghost ingredient handler for screens implementing IGhostItemTarget.
+     * Uses the shared interface to provide drop targets.
      */
-    private static class RuleEditorGhostIngredientHandler implements IGhostIngredientHandler<RuleEditorScreen> {
+    private static class GhostItemTargetHandler<T extends Screen & IGhostItemTarget> implements IGhostIngredientHandler<T> {
 
         @Override
-        public <I> List<Target<I>> getTargetsTyped(RuleEditorScreen screen, ITypedIngredient<I> ingredient, boolean doStart) {
+        public <I> List<Target<I>> getTargetsTyped(T screen, ITypedIngredient<I> ingredient, boolean doStart) {
             List<Target<I>> targets = new ArrayList<>();
 
             if (ingredient.getItemStack().isEmpty()) {
@@ -69,7 +69,7 @@ public class JeiPlugin implements IModPlugin {
 
             Rect2i bounds = screen.getGhostItemSlotBounds();
             if (bounds != null) {
-                targets.add(new ItemSlotTarget<>(bounds, screen::acceptGhostItem));
+                targets.add(new ItemSlotTarget<>(bounds, screen));
             }
 
             return targets;
@@ -81,42 +81,15 @@ public class JeiPlugin implements IModPlugin {
     }
 
     /**
-     * Ghost ingredient handler for ConditionEditorScreen.
-     * Provides a drop target for the condition item slot.
-     */
-    private static class ConditionEditorGhostIngredientHandler implements IGhostIngredientHandler<ConditionEditorScreen> {
-
-        @Override
-        public <I> List<Target<I>> getTargetsTyped(ConditionEditorScreen screen, ITypedIngredient<I> ingredient, boolean doStart) {
-            List<Target<I>> targets = new ArrayList<>();
-
-            if (ingredient.getItemStack().isEmpty()) {
-                return targets;
-            }
-
-            Rect2i bounds = screen.getGhostItemSlotBounds();
-            if (bounds != null) {
-                targets.add(new ItemSlotTarget<>(bounds, screen::acceptGhostItem));
-            }
-
-            return targets;
-        }
-
-        @Override
-        public void onComplete() {
-        }
-    }
-
-    /**
-     * Generic target for an item slot that accepts ghost ingredients.
+     * Target for an item slot that accepts ghost ingredients via IGhostItemTarget.
      */
     private static class ItemSlotTarget<I> implements IGhostIngredientHandler.Target<I> {
         private final Rect2i area;
-        private final Consumer<ItemStack> acceptor;
+        private final IGhostItemTarget target;
 
-        public ItemSlotTarget(Rect2i area, Consumer<ItemStack> acceptor) {
+        public ItemSlotTarget(Rect2i area, IGhostItemTarget target) {
             this.area = area;
-            this.acceptor = acceptor;
+            this.target = target;
         }
 
         @Override
@@ -127,7 +100,7 @@ public class JeiPlugin implements IModPlugin {
         @Override
         public void accept(I ingredient) {
             if (ingredient instanceof ItemStack stack) {
-                acceptor.accept(stack);
+                target.acceptGhostItem(stack);
             }
         }
     }

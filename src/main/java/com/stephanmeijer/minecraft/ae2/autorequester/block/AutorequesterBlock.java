@@ -1,22 +1,27 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.block;
 
+import java.util.List;
+
 import com.mojang.serialization.MapCodec;
 import com.stephanmeijer.minecraft.ae2.autorequester.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -30,21 +35,17 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class AutorequesterBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<BlockStatus> STATUS = EnumProperty.create("status", BlockStatus.class);
     public static final MapCodec<AutorequesterBlock> CODEC = simpleCodec(p -> new AutorequesterBlock());
 
     // Block properties matching AE2 machine blocks (easy to break)
@@ -56,6 +57,8 @@ public class AutorequesterBlock extends BaseEntityBlock {
                 .mapColor(MapColor.METAL)
                 .strength(HARDNESS, RESISTANCE));
         // No requiresCorrectToolForDrops - can be broken with any tool like AE2 machines
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(STATUS, BlockStatus.OFF));
     }
 
     @Override
@@ -65,13 +68,15 @@ public class AutorequesterBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, STATUS);
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return this.defaultBlockState()
+                .setValue(FACING, context.getHorizontalDirection().getOpposite())
+                .setValue(STATUS, BlockStatus.OFF);
     }
 
     @Override
@@ -155,6 +160,7 @@ public class AutorequesterBlock extends BaseEntityBlock {
 
     /**
      * Check if the item is a wrench by checking for the c:tools/wrench tag.
+     * AE2's wrenches are tagged with this common tag.
      */
     private boolean isWrench(ItemStack stack) {
         if (stack.isEmpty()) {

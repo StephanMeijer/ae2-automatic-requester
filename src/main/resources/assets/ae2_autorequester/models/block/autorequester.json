@@ -1,12 +1,72 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "minecraft:block/block",
   "textures": {
-    "down": "ae2_autorequester:block/autorequester_bottom",
-    "up": "ae2_autorequester:block/autorequester_top",
-    "north": "ae2_autorequester:block/autorequester_front",
-    "south": "ae2_autorequester:block/autorequester_side",
-    "east": "ae2_autorequester:block/autorequester_side",
-    "west": "ae2_autorequester:block/autorequester_side",
+    "bottom": "ae2_autorequester:block/autorequester_bottom",
+    "top": "ae2_autorequester:block/autorequester_top",
+    "side": "ae2_autorequester:block/autorequester_side",
+    "front": "ae2_autorequester:block/autorequester_front",
     "particle": "ae2_autorequester:block/autorequester_side"
-  }
+  },
+  "elements": [
+    {
+      "name": "main_body",
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down":  {"texture": "#bottom", "cullface": "down"},
+        "up":    {"texture": "#top", "cullface": "up"},
+        "south": {"texture": "#side", "cullface": "south"},
+        "east":  {"texture": "#side", "cullface": "east"},
+        "west":  {"texture": "#side", "cullface": "west"}
+      }
+    },
+    {
+      "name": "front_panel",
+      "from": [1, 1, 0],
+      "to": [15, 15, 1],
+      "faces": {
+        "north": {"texture": "#front", "cullface": "north"}
+      }
+    },
+    {
+      "name": "front_inset",
+      "from": [2, 2, -0.5],
+      "to": [14, 14, 0],
+      "faces": {
+        "north": {"texture": "#front", "uv": [2, 2, 14, 14]}
+      }
+    },
+    {
+      "name": "frame_top",
+      "from": [0, 15, 0],
+      "to": [16, 16, 1],
+      "faces": {
+        "north": {"texture": "#side", "uv": [0, 0, 16, 1], "cullface": "north"}
+      }
+    },
+    {
+      "name": "frame_bottom",
+      "from": [0, 0, 0],
+      "to": [16, 1, 1],
+      "faces": {
+        "north": {"texture": "#side", "uv": [0, 15, 16, 16], "cullface": "north"}
+      }
+    },
+    {
+      "name": "frame_left",
+      "from": [0, 1, 0],
+      "to": [1, 15, 1],
+      "faces": {
+        "north": {"texture": "#side", "uv": [0, 1, 1, 15], "cullface": "north"}
+      }
+    },
+    {
+      "name": "frame_right",
+      "from": [15, 1, 0],
+      "to": [16, 15, 1],
+      "faces": {
+        "north": {"texture": "#side", "uv": [15, 1, 16, 15], "cullface": "north"}
+      }
+    }
+  ]
 }

@@ -25,10 +25,11 @@
   "ae2_autorequester.gui.target_item": "Target item",
   "ae2_autorequester.gui.batch_size": "Batch size",
   "ae2_autorequester.gui.select_item": "Select item",
-  "ae2_autorequester.gui.no_network": "No ME Network connection",
+  "ae2_autorequester.gui.no_network": "Device Offline",
   "ae2_autorequester.gui.network_connected": "ME Network connected",
   "ae2_autorequester.gui.no_pattern": "No pattern available",
   "ae2_autorequester.gui.no_cpu": "No Crafting CPU available",
+  "ae2_autorequester.gui.missing_patterns": "Missing patterns",
 
   "ae2_autorequester.operator.less_than": "Less than (<)",
   "ae2_autorequester.operator.less_than_or_equal": "Less than or equal (<=)",
@@ -54,5 +55,6 @@
 
   "ae2_autorequester.jade.online": "Device Online",
   "ae2_autorequester.jade.offline": "Device Offline",
-  "ae2_autorequester.jade.rules": "Rules: %s"
+  "ae2_autorequester.jade.rules": "Rules: %s",
+  "ae2_autorequester.jade.missing_patterns": "Missing patterns!"
 }

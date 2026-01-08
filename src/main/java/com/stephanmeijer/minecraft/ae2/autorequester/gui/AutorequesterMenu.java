@@ -1,5 +1,8 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 
+import java.util.List;
+
+import com.stephanmeijer.minecraft.ae2.autorequester.AutorequesterConfig;
 import com.stephanmeijer.minecraft.ae2.autorequester.ModBlocks;
 import com.stephanmeijer.minecraft.ae2.autorequester.ModMenus;
 import com.stephanmeijer.minecraft.ae2.autorequester.block.AutorequesterBlockEntity;
@@ -13,11 +16,8 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.PacketDistributor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class AutorequesterMenu extends AbstractContainerMenu {
     private static final Logger LOG = LoggerFactory.getLogger(AutorequesterMenu.class);
@@ -94,7 +94,14 @@ public class AutorequesterMenu extends AbstractContainerMenu {
     }
 
     // Rule operations - these modify locally and sync to server
+    public boolean canAddRule() {
+        return AutorequesterConfig.validRuleCount(blockEntity.getRules().size());
+    }
+
     public void addRule() {
+        if (!canAddRule()) {
+            return;
+        }
         blockEntity.addRule(new CraftingRule());
         syncRulesToServer();
     }

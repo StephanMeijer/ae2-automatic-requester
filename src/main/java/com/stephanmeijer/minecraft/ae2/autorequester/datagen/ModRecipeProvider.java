@@ -1,5 +1,7 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.datagen;
 
+import java.util.concurrent.CompletableFuture;
+
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import com.stephanmeijer.minecraft.ae2.autorequester.AE2Autorequester;
@@ -11,8 +13,6 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.concurrent.CompletableFuture;
 
 public class ModRecipeProvider extends RecipeProvider {
 

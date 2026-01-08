@@ -1,6 +1,11 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import com.stephanmeijer.minecraft.ae2.autorequester.AutorequesterConfig;
+import com.stephanmeijer.minecraft.ae2.autorequester.compat.IGhostItemTarget;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingCondition;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingRule;
 import net.minecraft.client.Minecraft;
@@ -13,13 +18,8 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Screen for editing or creating a rule.
@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * - On cancel: calls onCancel
  * - Parent decides what to do with the result
  */
-public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
+public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> implements IGhostItemTarget {
     private static final Logger LOG = LoggerFactory.getLogger(RuleEditorScreen.class);
 
     private static final int GUI_WIDTH = 256;
@@ -115,6 +115,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
     private boolean isDraggingScrollbar = false;
 
     // Buttons
+    private Button addConditionButton;
     private Button editConditionButton;
     private Button deleteConditionButton;
     private Button duplicateConditionButton;
@@ -160,7 +161,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
         int buttonX = leftPos + PADDING;
 
         // Add condition button
-        addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddCondition())
+        addConditionButton = addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddCondition())
                 .bounds(buttonX, bottomY, BUTTON_SIZE, BUTTON_SIZE)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.add_condition")))
                 .build());
@@ -243,10 +244,12 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
         boolean hasSelection = selectedConditionIndex >= 0 && selectedConditionIndex < conditions.size();
         boolean canMoveUp = hasSelection && selectedConditionIndex > 0;
         boolean canMoveDown = hasSelection && selectedConditionIndex < conditions.size() - 1;
+        boolean canAddCondition = AutorequesterConfig.validConditionCount(conditions.size());
 
+        addConditionButton.active = canAddCondition;
         editConditionButton.active = hasSelection;
         deleteConditionButton.active = hasSelection;
-        duplicateConditionButton.active = hasSelection;
+        duplicateConditionButton.active = hasSelection && canAddCondition; // Duplicate also needs room for new condition
         moveUpConditionButton.active = canMoveUp;
         moveDownConditionButton.active = canMoveDown;
 
@@ -257,7 +260,8 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
     // ==================== Condition Operations ====================
 
     private void onAddCondition() {
-        if (conditions.size() >= AutorequesterConfig.maxConditionsPerRule) {
+        // Check if we've hit the configured condition limit
+        if (!AutorequesterConfig.validConditionCount(conditions.size())) {
             return;
         }
 
@@ -318,8 +322,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
     }
 
     private void onDuplicateCondition() {
-        if (selectedConditionIndex >= 0 && selectedConditionIndex < conditions.size() &&
-                conditions.size() < AutorequesterConfig.maxConditionsPerRule) {
+        if (selectedConditionIndex >= 0 && selectedConditionIndex < conditions.size()) {
             CraftingCondition copy = conditions.get(selectedConditionIndex).copy();
             conditions.add(selectedConditionIndex + 1, copy);
             selectedConditionIndex++;
@@ -352,7 +355,12 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
         editingRule.setName(nameField.getValue());
         try {
             int batchSize = Integer.parseInt(batchSizeField.getValue());
-            editingRule.setBatchSize(Math.min(batchSize, AutorequesterConfig.maxBatchSize));
+            batchSize = Math.max(1, batchSize);
+            // Clamp to max if value exceeds limit
+            if (!AutorequesterConfig.validBatchSize(batchSize)) {
+                batchSize = AutorequesterConfig.getMaxBatchSize();
+            }
+            editingRule.setBatchSize(batchSize);
         } catch (NumberFormatException e) {
             editingRule.setBatchSize(64);
         }
@@ -620,13 +628,15 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    // ==================== JEI Ghost Ingredient Support ====================
+    // ==================== Ghost Item Target (JEI/EMI) ====================
 
+    @Override
     public Rect2i getGhostItemSlotBounds() {
         return new Rect2i(leftPos + TARGET_ITEM_SLOT_X, topPos + BATCH_ROW_Y - 2,
                 TARGET_ITEM_SLOT_SIZE, TARGET_ITEM_SLOT_SIZE);
     }
 
+    @Override
     public void acceptGhostItem(ItemStack stack) {
         editingRule.setTargetItem(stack.getItem());
         updateButtonStates();

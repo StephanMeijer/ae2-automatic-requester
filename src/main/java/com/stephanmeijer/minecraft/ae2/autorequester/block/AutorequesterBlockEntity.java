@@ -1,6 +1,16 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.block;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Future;
+
 import appeng.api.config.Actionable;
+import appeng.api.networking.GridFlags;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
@@ -20,7 +30,6 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.util.AECableType;
 import com.google.common.collect.ImmutableSet;
-
 import com.stephanmeijer.minecraft.ae2.autorequester.AutorequesterConfig;
 import com.stephanmeijer.minecraft.ae2.autorequester.ModBlocks;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingCondition;
@@ -46,18 +55,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Future;
 
 public class AutorequesterBlockEntity extends BlockEntity implements MenuProvider, IInWorldGridNodeHost, IStorageWatcherNode, ICraftingRequester, ICraftingSimulationRequester {
     private static final Logger LOG = LoggerFactory.getLogger(AutorequesterBlockEntity.class);
@@ -71,13 +70,14 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     private static final IGridNodeListener<AutorequesterBlockEntity> NODE_LISTENER = new IGridNodeListener<>() {
         @Override
         public void onStateChanged(AutorequesterBlockEntity owner, IGridNode node, State state) {
-            owner.onGridStateChanged();
+            // Called when node state changes (power, channel, etc.)
+            owner.onMainNodeStateChanged(state);
         }
 
         @Override
         public void onGridChanged(AutorequesterBlockEntity owner, IGridNode node) {
             // Called when grid topology changes (e.g., cable removed/added)
-            owner.onGridStateChanged();
+            owner.onMainNodeStateChanged(State.GRID_BOOT);
         }
 
         @Override
@@ -112,19 +112,25 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
 
     // Tick counter for throttled operations
     private int tickCounter = 0;
-    private static final int CRAFTING_CHECK_INTERVAL = 20; // Check crafting every 20 ticks (1 second)
 
     public AutorequesterBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlocks.AUTOREQUESTER_BLOCK_ENTITY.get(), pos, blockState);
 
         // Create the managed grid node
-        this.mainNode = GridHelper.createManagedNode(this, NODE_LISTENER)
+        var nodeBuilder = GridHelper.createManagedNode(this, NODE_LISTENER)
                 .setVisualRepresentation(ModBlocks.AUTOREQUESTER.get())
                 .setInWorldNode(true)
                 .setTagName("node")
                 .setIdlePowerUsage(5.0) // 5 AE/t idle power draw
                 .addService(IStorageWatcherNode.class, this)
                 .addService(ICraftingRequester.class, this);
+
+        // Only require a channel if configured to do so
+        if (AutorequesterConfig.requiresChannel()) {
+            nodeBuilder.setFlags(GridFlags.REQUIRE_CHANNEL);
+        }
+
+        this.mainNode = nodeBuilder;
 
         // Create action source for this block entity
         this.actionSource = IActionSource.ofMachine(mainNode::getNode);
@@ -133,20 +139,30 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     // ==================== Grid Node Lifecycle ====================
 
     /**
-     * Called when the grid node's state changes (connected, disconnected, topology change, etc.)
+     * Called when the grid node's state changes (power, channel, topology, etc.)
+     * This follows the AE2 pattern used in CraftingBlockEntity.
      */
-    private void onGridStateChanged() {
-        boolean currentlyReady = mainNode.isReady();
-        LOG.debug("[Autorequester] Grid state changed: ready={}", currentlyReady);
+    private void onMainNodeStateChanged(IGridNodeListener.State reason) {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+
+        // Skip during grid boot to avoid unnecessary updates
+        if (reason == IGridNodeListener.State.GRID_BOOT) {
+            return;
+        }
+
+        boolean isOnline = mainNode.isOnline();
+        LOG.debug("[Autorequester] Node state changed: reason={}, online={}", reason, isOnline);
 
         boolean wasReady = gridReady;
-        gridReady = currentlyReady;
+        gridReady = isOnline;
 
-        if (gridReady && !wasReady) {
+        if (isOnline && !wasReady) {
             LOG.info("[Autorequester] Connected to ME network at {}", worldPosition);
             updateWatchedItems();
-            evaluateAllRules();
-        } else if (!gridReady && wasReady) {
+            evaluateAllRules(); // This calls updateBlockStatus()
+        } else if (!isOnline && wasReady) {
             LOG.info("[Autorequester] Disconnected from ME network at {}", worldPosition);
             // Mark all rules as error when disconnected
             for (CraftingRule rule : rules) {
@@ -154,6 +170,8 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
             }
         }
 
+        // Always update block status to reflect current power/channel state
+        updateBlockStatus();
         markDirtyAndSync();
     }
 
@@ -261,6 +279,41 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     }
 
     /**
+     * Checks if the given item is already being crafted or has a pending calculation
+     * by ANY rule (excluding the specified rule ID).
+     * This prevents multiple simultaneous crafting jobs for the same output item.
+     */
+    private boolean isItemBeingCrafted(Item item, UUID excludeRuleId) {
+        for (CraftingRule otherRule : rules) {
+            if (otherRule.getId().equals(excludeRuleId)) {
+                continue;
+            }
+
+            // Check if target items match
+            if (!item.equals(otherRule.getTargetItem())) {
+                continue;
+            }
+
+            // Check if other rule has an active crafting job
+            ICraftingLink otherJob = activeCraftingJobs.get(otherRule.getId());
+            if (otherJob != null && !otherJob.isDone()) {
+                LOG.debug("[Autorequester] Item {} already being crafted by rule '{}'",
+                        item, otherRule.getName());
+                return true;
+            }
+
+            // Check if other rule has a pending calculation
+            Future<ICraftingPlan> otherCalc = pendingCalculations.get(otherRule.getId());
+            if (otherCalc != null && !otherCalc.isDone()) {
+                LOG.debug("[Autorequester] Item {} already has pending calculation by rule '{}'",
+                        item, otherRule.getName());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if a given AEKey is relevant to a rule (either as target or in conditions).
      */
     private boolean isRelevantToRule(CraftingRule rule, AEKey key) {
@@ -298,6 +351,62 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
                 rule.setStatus(RuleStatus.IDLE);
             }
         }
+        updateBlockStatus();
+    }
+
+    /**
+     * Updates the block's visual status based on the overall state of rules.
+     * Priority: ERROR > WARNING > ACTIVE > IDLE > OFF
+     */
+    private void updateBlockStatus() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+
+        BlockStatus newStatus;
+
+        if (!gridReady) {
+            newStatus = BlockStatus.OFF;
+        } else if (rules.isEmpty()) {
+            newStatus = BlockStatus.IDLE;
+        } else {
+            // Determine status based on all rules
+            boolean hasError = false;
+            boolean hasWarning = false;
+            boolean hasActive = false;
+
+            for (CraftingRule rule : rules) {
+                if (!rule.isEnabled()) {
+                    continue;
+                }
+                RuleStatus status = rule.getStatus();
+                if (status == RuleStatus.ERROR || status == RuleStatus.NO_CPU) {
+                    hasError = true;
+                } else if (status == RuleStatus.MISSING_PATTERN) {
+                    hasWarning = true;
+                } else if (status == RuleStatus.READY || status == RuleStatus.CRAFTING) {
+                    hasActive = true;
+                }
+            }
+
+            if (hasError) {
+                newStatus = BlockStatus.ERROR;
+            } else if (hasWarning) {
+                newStatus = BlockStatus.WARNING;
+            } else if (hasActive) {
+                newStatus = BlockStatus.ACTIVE;
+            } else {
+                newStatus = BlockStatus.IDLE;
+            }
+        }
+
+        // Only update if changed
+        BlockState currentState = getBlockState();
+        BlockStatus currentStatus = currentState.getValue(AutorequesterBlock.STATUS);
+        if (currentStatus != newStatus) {
+            level.setBlock(worldPosition, currentState.setValue(AutorequesterBlock.STATUS, newStatus), 3);
+            LOG.debug("[Autorequester] Block status changed: {} -> {}", currentStatus, newStatus);
+        }
     }
 
     /**
@@ -320,7 +429,7 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
             return;
         }
 
-        // Check if already crafting this item
+        // Check if this rule already has an active crafting job
         ICraftingLink activeJob = activeCraftingJobs.get(rule.getId());
         if (activeJob != null && !activeJob.isDone()) {
             rule.setStatus(RuleStatus.CRAFTING);
@@ -330,6 +439,14 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
         // Clean up completed job
         if (activeJob != null && activeJob.isDone()) {
             activeCraftingJobs.remove(rule.getId());
+        }
+
+        // Check if ANY rule is already crafting/calculating the same target item
+        // This prevents multiple jobs for the same output item
+        Item targetItem = rule.getTargetItem();
+        if (isItemBeingCrafted(targetItem, rule.getId())) {
+            rule.setStatus(RuleStatus.CRAFTING); // Show as crafting since another rule handles it
+            return;
         }
 
         // Evaluate conditions
@@ -547,8 +664,8 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     public void serverTick() {
         tickCounter++;
 
-        // Throttle crafting operations to every 20 ticks (1 second)
-        if (tickCounter >= CRAFTING_CHECK_INTERVAL) {
+        // Throttle operations based on configured check interval
+        if (tickCounter >= AutorequesterConfig.getCheckInterval()) {
             tickCounter = 0;
 
             // Check pending crafting calculations (async completions)
@@ -608,10 +725,8 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public void addRule(CraftingRule rule) {
-        if (rules.size() < AutorequesterConfig.maxRulesPerBlock) {
-            rules.add(rule);
-            onRulesChanged();
-        }
+        rules.add(rule);
+        onRulesChanged();
     }
 
     public void removeRule(UUID ruleId) {
@@ -643,11 +758,7 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     public void setRulesFromPacket(List<CraftingRule> newRules) {
         LOG.info("[BlockEntity] setRulesFromPacket - receiving {} rules", newRules.size());
         rules.clear();
-        for (CraftingRule rule : newRules) {
-            if (rules.size() < AutorequesterConfig.maxRulesPerBlock) {
-                rules.add(rule);
-            }
-        }
+        rules.addAll(newRules);
         LOG.info("[BlockEntity] After setRulesFromPacket - have {} rules", rules.size());
         for (int i = 0; i < rules.size(); i++) {
             CraftingRule r = rules.get(i);
@@ -685,7 +796,7 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public void duplicateRule(int index) {
-        if (index >= 0 && index < rules.size() && rules.size() < AutorequesterConfig.maxRulesPerBlock) {
+        if (index >= 0 && index < rules.size()) {
             CraftingRule copy = rules.get(index).copy();
             rules.add(index + 1, copy);
             onRulesChanged();
@@ -695,7 +806,7 @@ public class AutorequesterBlockEntity extends BlockEntity implements MenuProvide
     public boolean isNetworkConnected() {
         // On server: query directly; on client: use synced cached value
         if (level != null && !level.isClientSide()) {
-            return mainNode.isReady();
+            return mainNode.isOnline();
         }
         return gridReady;
     }

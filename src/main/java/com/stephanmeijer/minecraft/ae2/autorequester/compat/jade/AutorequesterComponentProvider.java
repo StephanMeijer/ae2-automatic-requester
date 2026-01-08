@@ -1,6 +1,7 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.compat.jade;
 
 import com.stephanmeijer.minecraft.ae2.autorequester.block.AutorequesterBlockEntity;
+import com.stephanmeijer.minecraft.ae2.autorequester.data.RuleStatus;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +22,7 @@ public enum AutorequesterComponentProvider implements IBlockComponentProvider, I
 
     private static final String TAG_RULE_COUNT = "ruleCount";
     private static final String TAG_CONNECTED = "connected";
+    private static final String TAG_HAS_MISSING_PATTERNS = "hasMissingPatterns";
 
     // ==================== Client-side tooltip rendering ====================
 
@@ -43,6 +45,12 @@ public enum AutorequesterComponentProvider implements IBlockComponentProvider, I
                 "ae2_autorequester.jade.rules",
                 ruleCount
         ).withStyle(style -> style.withColor(0xFFFFFF)));
+
+        // Show missing patterns warning (yellow)
+        if (serverData.getBoolean(TAG_HAS_MISSING_PATTERNS)) {
+            tooltip.add(Component.translatable("ae2_autorequester.jade.missing_patterns")
+                    .withStyle(style -> style.withColor(0xFFFF55)));
+        }
     }
 
     @Override
@@ -57,6 +65,11 @@ public enum AutorequesterComponentProvider implements IBlockComponentProvider, I
         if (accessor.getBlockEntity() instanceof AutorequesterBlockEntity blockEntity) {
             data.putInt(TAG_RULE_COUNT, blockEntity.getRules().size());
             data.putBoolean(TAG_CONNECTED, blockEntity.isNetworkConnected());
+
+            // Check if any enabled rules have missing patterns
+            boolean hasMissingPatterns = blockEntity.getRules().stream()
+                    .anyMatch(rule -> rule.isEnabled() && rule.getStatus() == RuleStatus.MISSING_PATTERN);
+            data.putBoolean(TAG_HAS_MISSING_PATTERNS, hasMissingPatterns);
         }
     }
 }

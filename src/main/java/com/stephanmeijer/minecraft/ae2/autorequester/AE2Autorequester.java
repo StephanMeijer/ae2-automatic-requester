@@ -2,7 +2,6 @@ package com.stephanmeijer.minecraft.ae2.autorequester;
 
 import appeng.api.AECapabilities;
 import com.mojang.logging.LogUtils;
-import com.stephanmeijer.minecraft.ae2.autorequester.block.AutorequesterBlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;

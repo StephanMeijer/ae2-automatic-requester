@@ -1,8 +1,28 @@
 {
   "variants": {
-    "facing=north": { "model": "ae2_autorequester:block/autorequester" },
-    "facing=south": { "model": "ae2_autorequester:block/autorequester", "y": 180 },
-    "facing=east": { "model": "ae2_autorequester:block/autorequester", "y": 90 },
-    "facing=west": { "model": "ae2_autorequester:block/autorequester", "y": 270 }
+    "facing=north,status=off": { "model": "ae2_autorequester:block/autorequester_off" },
+    "facing=south,status=off": { "model": "ae2_autorequester:block/autorequester_off", "y": 180 },
+    "facing=east,status=off": { "model": "ae2_autorequester:block/autorequester_off", "y": 90 },
+    "facing=west,status=off": { "model": "ae2_autorequester:block/autorequester_off", "y": 270 },
+
+    "facing=north,status=idle": { "model": "ae2_autorequester:block/autorequester_idle" },
+    "facing=south,status=idle": { "model": "ae2_autorequester:block/autorequester_idle", "y": 180 },
+    "facing=east,status=idle": { "model": "ae2_autorequester:block/autorequester_idle", "y": 90 },
+    "facing=west,status=idle": { "model": "ae2_autorequester:block/autorequester_idle", "y": 270 },
+
+    "facing=north,status=active": { "model": "ae2_autorequester:block/autorequester_active" },
+    "facing=south,status=active": { "model": "ae2_autorequester:block/autorequester_active", "y": 180 },
+    "facing=east,status=active": { "model": "ae2_autorequester:block/autorequester_active", "y": 90 },
+    "facing=west,status=active": { "model": "ae2_autorequester:block/autorequester_active", "y": 270 },
+
+    "facing=north,status=warning": { "model": "ae2_autorequester:block/autorequester_warning" },
+    "facing=south,status=warning": { "model": "ae2_autorequester:block/autorequester_warning", "y": 180 },
+    "facing=east,status=warning": { "model": "ae2_autorequester:block/autorequester_warning", "y": 90 },
+    "facing=west,status=warning": { "model": "ae2_autorequester:block/autorequester_warning", "y": 270 },
+
+    "facing=north,status=error": { "model": "ae2_autorequester:block/autorequester_error" },
+    "facing=south,status=error": { "model": "ae2_autorequester:block/autorequester_error", "y": 180 },
+    "facing=east,status=error": { "model": "ae2_autorequester:block/autorequester_error", "y": 90 },
+    "facing=west,status=error": { "model": "ae2_autorequester:block/autorequester_error", "y": 270 }
   }
 }

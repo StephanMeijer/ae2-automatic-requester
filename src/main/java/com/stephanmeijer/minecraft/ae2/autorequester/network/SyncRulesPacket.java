@@ -1,6 +1,8 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.network;
 
-import com.stephanmeijer.minecraft.ae2.autorequester.AE2Autorequester;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.stephanmeijer.minecraft.ae2.autorequester.block.AutorequesterBlockEntity;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingRule;
 import net.minecraft.core.BlockPos;
@@ -10,16 +12,11 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Packet sent from client to server to sync all rules for a block entity.

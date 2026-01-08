@@ -1,7 +1,6 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.network;
 
 import com.stephanmeijer.minecraft.ae2.autorequester.AE2Autorequester;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

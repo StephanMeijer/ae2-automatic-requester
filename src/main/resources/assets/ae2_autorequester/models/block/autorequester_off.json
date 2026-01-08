@@ -1,0 +1,6 @@
+{
+  "parent": "ae2_autorequester:block/autorequester",
+  "textures": {
+    "front": "ae2_autorequester:block/autorequester_front_off"
+  }
+}

@@ -1,5 +1,8 @@
 package com.stephanmeijer.minecraft.ae2.autorequester.gui;
 
+import java.util.function.Consumer;
+
+import com.stephanmeijer.minecraft.ae2.autorequester.compat.IGhostItemTarget;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.ComparisonOperator;
 import com.stephanmeijer.minecraft.ae2.autorequester.data.CraftingCondition;
 import net.minecraft.client.Minecraft;
@@ -13,8 +16,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.function.Consumer;
-
 /**
  * Screen for editing or creating a condition.
  *
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
  * - On cancel: calls onCancel
  * - Parent decides what to do with the result
  */
-public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEditorMenu> {
+public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEditorMenu> implements IGhostItemTarget {
     // Dialog dimensions
     private static final int GUI_WIDTH = 220;
     private static final int GUI_HEIGHT = 150;
@@ -312,13 +313,15 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    // ==================== JEI Ghost Ingredient Support ====================
+    // ==================== Ghost Item Target (JEI/EMI) ====================
 
+    @Override
     public Rect2i getGhostItemSlotBounds() {
         int mainRowY = topPos + MAIN_ROW_Y_OFFSET;
         return new Rect2i(leftPos + PADDING, mainRowY, ITEM_SLOT_SIZE, BUTTON_HEIGHT);
     }
 
+    @Override
     public void acceptGhostItem(ItemStack stack) {
         this.currentItem = stack.copyWithCount(1);
         updateSaveButtonState();
