@@ -1,0 +1,13 @@
+# Lefthook configuration
+# https://github.com/evilmartians/lefthook
+
+pre-commit:
+  commands:
+    spotless-apply:
+      run: ./gradlew spotlessApply --quiet
+      stage_fixed: true  # Re-stage files after formatting
+
+pre-push:
+  commands:
+    spotless-check:
+      run: ./gradlew spotlessCheck --quiet
