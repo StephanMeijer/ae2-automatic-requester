@@ -6,8 +6,8 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.2'
 }
 
-// Load version from VERSION file (managed by release-please)
-def mod_version = file('VERSION').text.trim()
+// Load version from version.txt (managed by release-please)
+def mod_version = file('version.txt').text.trim()
 version = mod_version
 group = mod_group_id
 

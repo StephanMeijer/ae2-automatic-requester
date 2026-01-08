@@ -6,12 +6,6 @@
     ".": {
       "release-type": "simple",
       "package-name": "ae2-autorequester",
-      "extra-files": [
-        {
-          "type": "plain-text",
-          "path": "VERSION"
-        }
-      ],
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
