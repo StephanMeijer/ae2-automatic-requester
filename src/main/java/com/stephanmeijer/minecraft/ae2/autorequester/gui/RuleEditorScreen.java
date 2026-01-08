@@ -39,6 +39,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private static final int PADDING = 8;
     private static final int BUTTON_SIZE = 20;
     private static final int BUTTON_SPACING = 4;
+    private static final int BUTTON_GROUP_GAP = 10;
 
     // Name field
     private static final int NAME_FIELD_Y = 20;
@@ -52,6 +53,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     private static final int TARGET_ITEM_LABEL_X = 150;
     private static final int TARGET_ITEM_SLOT_X = 226;
     private static final int TARGET_ITEM_SLOT_SIZE = 20;
+    private static final int TARGET_ITEM_SLOT_Y_OFFSET = -2; // Vertical centering adjustment
 
     // Conditions section
     private static final int CONDITIONS_HEADER_Y = 68;
@@ -202,7 +204,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
         duplicateConditionButton = addRenderableWidget(Button.builder(Component.literal("\u29C9"), button -> onDuplicateCondition())
                 .bounds(buttonX, bottomY, BUTTON_SIZE, BUTTON_SIZE)
                 .build());
-        buttonX += BUTTON_SIZE + 10;
+        buttonX += BUTTON_SIZE + BUTTON_GROUP_GAP;
 
         // Move up button
         moveUpConditionButton = addRenderableWidget(Button.builder(Component.literal("\u25B2"), button -> onMoveConditionUp())
@@ -453,27 +455,27 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         // Draw panel background
-        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF8B8B8B);
-        guiGraphics.fill(leftPos + 2, topPos + 2, leftPos + imageWidth - 2, topPos + imageHeight - 2, 0xFF373737);
+        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, GuiColors.BACKGROUND_BORDER);
+        guiGraphics.fill(leftPos + 2, topPos + 2, leftPos + imageWidth - 2, topPos + imageHeight - 2, GuiColors.BACKGROUND_FILL);
 
         // Draw title bar
-        guiGraphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + 16, 0xFF1E1E1E);
+        guiGraphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + 16, GuiColors.TITLE_BAR);
 
         // Labels
         guiGraphics.drawString(font, Component.translatable("ae2_autorequester.gui.rule_name_label"),
-                leftPos + PADDING, topPos + NAME_FIELD_Y + 4, 0xAAAAAA);
+                leftPos + PADDING, topPos + NAME_FIELD_Y + 4, GuiColors.TEXT_LABEL);
         guiGraphics.drawString(font, Component.translatable("ae2_autorequester.gui.batch_size"),
-                leftPos + PADDING, topPos + BATCH_ROW_Y + 4, 0xAAAAAA);
+                leftPos + PADDING, topPos + BATCH_ROW_Y + 4, GuiColors.TEXT_LABEL);
         guiGraphics.drawString(font, Component.translatable("ae2_autorequester.gui.target_item"),
-                leftPos + TARGET_ITEM_LABEL_X, topPos + BATCH_ROW_Y + 4, 0xAAAAAA);
+                leftPos + TARGET_ITEM_LABEL_X, topPos + BATCH_ROW_Y + 4, GuiColors.TEXT_LABEL);
 
         // Target item slot
         int targetSlotX = leftPos + TARGET_ITEM_SLOT_X;
-        int targetSlotY = topPos + BATCH_ROW_Y - 2;
+        int targetSlotY = topPos + BATCH_ROW_Y + TARGET_ITEM_SLOT_Y_OFFSET;
         ItemStack targetItem = editingRule.getTargetItemStack();
-        int slotInnerColor = targetItem.isEmpty() ? 0xFF373737 : 0xFF6A6A6A;
+        int slotInnerColor = targetItem.isEmpty() ? GuiColors.SLOT_EMPTY : GuiColors.SLOT_FILLED;
         guiGraphics.fill(targetSlotX, targetSlotY, targetSlotX + TARGET_ITEM_SLOT_SIZE,
-                targetSlotY + TARGET_ITEM_SLOT_SIZE, 0xFF1E1E1E);
+                targetSlotY + TARGET_ITEM_SLOT_SIZE, GuiColors.SLOT_BORDER);
         guiGraphics.fill(targetSlotX + 1, targetSlotY + 1, targetSlotX + TARGET_ITEM_SLOT_SIZE - 1,
                 targetSlotY + TARGET_ITEM_SLOT_SIZE - 1, slotInnerColor);
 
@@ -483,16 +485,16 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
 
         // Conditions header
         guiGraphics.drawString(font, Component.translatable("ae2_autorequester.gui.conditions"),
-                leftPos + CONDITION_LIST_X, topPos + CONDITIONS_HEADER_Y, 0xFFFFFF);
+                leftPos + CONDITION_LIST_X, topPos + CONDITIONS_HEADER_Y, GuiColors.TEXT_PRIMARY);
 
         // Condition list background
         int condListY = topPos + CONDITION_LIST_Y;
         guiGraphics.fill(leftPos + CONDITION_LIST_X, condListY,
-                leftPos + CONDITION_LIST_X + CONDITION_LIST_WIDTH, condListY + CONDITION_LIST_HEIGHT, 0xFF1E1E1E);
+                leftPos + CONDITION_LIST_X + CONDITION_LIST_WIDTH, condListY + CONDITION_LIST_HEIGHT, GuiColors.LIST_BACKGROUND);
 
         // Scrollbar track
         guiGraphics.fill(leftPos + SCROLLBAR_X, condListY,
-                leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH, condListY + CONDITION_LIST_HEIGHT, 0xFF2A2A2A);
+                leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH, condListY + CONDITION_LIST_HEIGHT, GuiColors.SCROLLBAR_TRACK);
 
         // Scrollbar thumb
         if (conditions.size() > MAX_VISIBLE_CONDITIONS) {
@@ -500,7 +502,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
             int thumbHeight = Math.max(20, CONDITION_LIST_HEIGHT * MAX_VISIBLE_CONDITIONS / conditions.size());
             int thumbY = condListY + (CONDITION_LIST_HEIGHT - thumbHeight) * conditionScrollOffset / maxScroll;
             guiGraphics.fill(leftPos + SCROLLBAR_X + 1, thumbY,
-                    leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH - 1, thumbY + thumbHeight, 0xFF6A6A6A);
+                    leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH - 1, thumbY + thumbHeight, GuiColors.SCROLLBAR_THUMB);
         }
 
         // Render visible conditions
@@ -511,7 +513,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
 
             if (index == selectedConditionIndex) {
                 guiGraphics.fill(leftPos + CONDITION_LIST_X, y,
-                        leftPos + CONDITION_LIST_X + CONDITION_LIST_WIDTH, y + CONDITION_HEIGHT - 1, 0xFF4A4A4A);
+                        leftPos + CONDITION_LIST_X + CONDITION_LIST_WIDTH, y + CONDITION_HEIGHT - 1, GuiColors.SELECTION_HIGHLIGHT);
             }
 
             renderConditionEntry(guiGraphics, condition, leftPos + CONDITION_LIST_X + 2, y + 2);
@@ -522,27 +524,27 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
             guiGraphics.drawCenteredString(font,
                     Component.translatable("ae2_autorequester.gui.no_conditions"),
                     leftPos + CONDITION_LIST_X + CONDITION_LIST_WIDTH / 2,
-                    condListY + CONDITION_LIST_HEIGHT / 2, 0x888888);
+                    condListY + CONDITION_LIST_HEIGHT / 2, GuiColors.TEXT_SECONDARY);
         }
     }
 
     private void renderConditionEntry(GuiGraphics guiGraphics, CraftingCondition condition, int x, int y) {
         // Item slot
-        guiGraphics.fill(x, y, x + 18, y + 18, 0xFF2A2A2A);
+        guiGraphics.fill(x, y, x + 18, y + 18, GuiColors.SLOT_INNER);
         if (!condition.getItemStack().isEmpty()) {
             guiGraphics.renderItem(condition.getItemStack(), x + 1, y + 1);
         }
 
         // Operator symbol
-        guiGraphics.drawString(font, condition.getOperator().getSymbol(), x + 24, y + 5, 0xFFFFFF);
+        guiGraphics.drawString(font, condition.getOperator().getSymbol(), x + 24, y + 5, GuiColors.TEXT_PRIMARY);
 
         // Threshold value
-        guiGraphics.drawString(font, String.valueOf(condition.getThreshold()), x + 50, y + 5, 0xFFFF55);
+        guiGraphics.drawString(font, String.valueOf(condition.getThreshold()), x + 50, y + 5, GuiColors.TEXT_HIGHLIGHT);
     }
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawCenteredString(font, title, imageWidth / 2, 6, 0xFFFFFF);
+        guiGraphics.drawCenteredString(font, title, imageWidth / 2, 6, GuiColors.TEXT_PRIMARY);
     }
 
     @Override
@@ -551,7 +553,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
 
         // Target item tooltip
         int targetSlotX = leftPos + TARGET_ITEM_SLOT_X;
-        int targetSlotY = topPos + BATCH_ROW_Y - 2;
+        int targetSlotY = topPos + BATCH_ROW_Y + TARGET_ITEM_SLOT_Y_OFFSET;
         if (mouseX >= targetSlotX && mouseX < targetSlotX + TARGET_ITEM_SLOT_SIZE &&
                 mouseY >= targetSlotY && mouseY < targetSlotY + TARGET_ITEM_SLOT_SIZE) {
             ItemStack targetItem = editingRule.getTargetItemStack();
@@ -569,7 +571,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         // Target item slot click
         int targetSlotX = leftPos + TARGET_ITEM_SLOT_X;
-        int targetSlotY = topPos + BATCH_ROW_Y - 2;
+        int targetSlotY = topPos + BATCH_ROW_Y + TARGET_ITEM_SLOT_Y_OFFSET;
         if (mouseX >= targetSlotX && mouseX < targetSlotX + TARGET_ITEM_SLOT_SIZE &&
                 mouseY >= targetSlotY && mouseY < targetSlotY + TARGET_ITEM_SLOT_SIZE) {
             ItemStack carried = minecraft.player.containerMenu.getCarried();
@@ -665,7 +667,7 @@ public class RuleEditorScreen extends AbstractContainerScreen<RuleEditorMenu> im
 
     @Override
     public Rect2i getGhostItemSlotBounds() {
-        return new Rect2i(leftPos + TARGET_ITEM_SLOT_X, topPos + BATCH_ROW_Y - 2,
+        return new Rect2i(leftPos + TARGET_ITEM_SLOT_X, topPos + BATCH_ROW_Y + TARGET_ITEM_SLOT_Y_OFFSET,
                 TARGET_ITEM_SLOT_SIZE, TARGET_ITEM_SLOT_SIZE);
     }
 

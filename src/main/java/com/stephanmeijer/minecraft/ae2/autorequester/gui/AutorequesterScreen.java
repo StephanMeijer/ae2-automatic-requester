@@ -24,17 +24,36 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     // GUI dimensions
     private static final int GUI_WIDTH = 256;
     private static final int GUI_HEIGHT = 222;
+    private static final int PADDING = 8;
 
     // Rule list area
-    private static final int RULE_LIST_X = 8;
+    private static final int RULE_LIST_X = PADDING;
     private static final int RULE_LIST_Y = 18;
     private static final int RULE_LIST_WIDTH = 228;
     private static final int RULE_ENTRY_HEIGHT = 24;
     private static final int MAX_VISIBLE_RULES = 7;
+    private static final int RULE_LIST_HEIGHT = MAX_VISIBLE_RULES * RULE_ENTRY_HEIGHT;
 
     // Scrollbar
     private static final int SCROLLBAR_X = RULE_LIST_X + RULE_LIST_WIDTH + 2;
     private static final int SCROLLBAR_WIDTH = 10;
+
+    // Button dimensions
+    private static final int BUTTON_SIZE = 20;
+    private static final int BUTTON_SPACING = 4;
+    private static final int BUTTON_GROUP_GAP = 6;
+    private static final int BOTTOM_BUTTON_Y_OFFSET = 28;
+
+    // Rule entry toggle
+    private static final int TOGGLE_WIDTH = 28;
+    private static final int TOGGLE_HEIGHT = 14;
+    private static final int TOGGLE_MARGIN = 4;
+    private static final int TOGGLE_X_OFFSET = RULE_LIST_WIDTH - TOGGLE_WIDTH - TOGGLE_MARGIN;
+    private static final int TOGGLE_CLICK_THRESHOLD = TOGGLE_WIDTH + TOGGLE_MARGIN + 3;
+
+    // Status icon
+    private static final int STATUS_ICON_SIZE = 12;
+    private static final int STATUS_ICON_MARGIN = 8;
 
     private int scrollOffset;
     private int selectedRuleIndex = -1;
@@ -69,39 +88,45 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
                     r.getBatchSize(), r.getConditions().size());
         }
 
-        int buttonY = topPos + imageHeight - 28;
+        int buttonY = topPos + imageHeight - BOTTOM_BUTTON_Y_OFFSET;
+        int buttonX = leftPos + PADDING;
 
         // Add Rule button
         addRuleButton = addRenderableWidget(Button.builder(Component.literal("+"), button -> onAddRule())
-                .bounds(leftPos + 8, buttonY, 20, 20)
+                .bounds(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE)
                 .build());
+        buttonX += BUTTON_SIZE + BUTTON_SPACING;
 
         // Edit button
         editButton = addRenderableWidget(Button.builder(Component.literal("✎"), button -> onEditRule())
-                .bounds(leftPos + 32, buttonY, 20, 20)
+                .bounds(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.edit_rule")))
                 .build());
+        buttonX += BUTTON_SIZE + BUTTON_SPACING;
 
         // Delete button
         deleteButton = addRenderableWidget(Button.builder(Component.literal("✕"), button -> onDeleteRule())
-                .bounds(leftPos + 56, buttonY, 20, 20)
+                .bounds(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.delete_rule")))
                 .build());
+        buttonX += BUTTON_SIZE + BUTTON_SPACING;
 
         // Duplicate button
         duplicateButton = addRenderableWidget(Button.builder(Component.literal("⧉"), button -> onDuplicateRule())
-                .bounds(leftPos + 80, buttonY, 20, 20)
+                .bounds(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE)
                 .build());
+        buttonX += BUTTON_SIZE + BUTTON_GROUP_GAP;
 
         // Move up button
         moveUpButton = addRenderableWidget(Button.builder(Component.literal("▲"), button -> onMoveUp())
-                .bounds(leftPos + 110, buttonY, 20, 20)
+                .bounds(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.move_up")))
                 .build());
+        buttonX += BUTTON_SIZE + BUTTON_SPACING;
 
         // Move down button
         moveDownButton = addRenderableWidget(Button.builder(Component.literal("▼"), button -> onMoveDown())
-                .bounds(leftPos + 134, buttonY, 20, 20)
+                .bounds(buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.move_down")))
                 .build());
 
@@ -145,32 +170,31 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         // Draw background
-        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF8B8B8B);
-        guiGraphics.fill(leftPos + 2, topPos + 2, leftPos + imageWidth - 2, topPos + imageHeight - 2, 0xFF373737);
+        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, GuiColors.BACKGROUND_BORDER);
+        guiGraphics.fill(leftPos + 2, topPos + 2, leftPos + imageWidth - 2, topPos + imageHeight - 2, GuiColors.BACKGROUND_FILL);
 
         // Draw title bar
-        guiGraphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + 16, 0xFF1E1E1E);
+        guiGraphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + 16, GuiColors.TITLE_BAR);
 
         // Draw rule list background
-        int listHeight = MAX_VISIBLE_RULES * RULE_ENTRY_HEIGHT;
         guiGraphics.fill(leftPos + RULE_LIST_X, topPos + RULE_LIST_Y,
-                leftPos + RULE_LIST_X + RULE_LIST_WIDTH, topPos + RULE_LIST_Y + listHeight,
-                0xFF1E1E1E);
+                leftPos + RULE_LIST_X + RULE_LIST_WIDTH, topPos + RULE_LIST_Y + RULE_LIST_HEIGHT,
+                GuiColors.LIST_BACKGROUND);
 
         // Draw scrollbar track
         guiGraphics.fill(leftPos + SCROLLBAR_X, topPos + RULE_LIST_Y,
-                leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH, topPos + RULE_LIST_Y + listHeight,
-                0xFF2A2A2A);
+                leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH, topPos + RULE_LIST_Y + RULE_LIST_HEIGHT,
+                GuiColors.SCROLLBAR_TRACK);
 
         // Draw scrollbar thumb
         List<CraftingRule> rules = menu.getRules();
         if (rules.size() > MAX_VISIBLE_RULES) {
             int maxScroll = rules.size() - MAX_VISIBLE_RULES;
-            int thumbHeight = Math.max(20, listHeight * MAX_VISIBLE_RULES / rules.size());
-            int thumbY = topPos + RULE_LIST_Y + (listHeight - thumbHeight) * scrollOffset / maxScroll;
+            int thumbHeight = Math.max(20, RULE_LIST_HEIGHT * MAX_VISIBLE_RULES / rules.size());
+            int thumbY = topPos + RULE_LIST_Y + (RULE_LIST_HEIGHT - thumbHeight) * scrollOffset / maxScroll;
             guiGraphics.fill(leftPos + SCROLLBAR_X + 1, thumbY,
                     leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH - 1, thumbY + thumbHeight,
-                    0xFF6A6A6A);
+                    GuiColors.SCROLLBAR_THUMB);
         }
 
         // Draw rules
@@ -183,15 +207,15 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             if (ruleIndex == selectedRuleIndex) {
                 guiGraphics.fill(leftPos + RULE_LIST_X, y,
                         leftPos + RULE_LIST_X + RULE_LIST_WIDTH, y + RULE_ENTRY_HEIGHT - 1,
-                        0xFF4A4A4A);
+                        GuiColors.SELECTION_HIGHLIGHT);
             }
 
             // Draw rule entry
             renderRuleEntry(guiGraphics, rule, leftPos + RULE_LIST_X + 2, y + 2);
         }
 
-        // Status icon (top-right corner, 12x12) - Priority: error > warning > success
-        int statusIconX = leftPos + imageWidth - 20;
+        // Status icon (top-right corner) - Priority: error > warning > success
+        int statusIconX = leftPos + imageWidth - STATUS_ICON_MARGIN - STATUS_ICON_SIZE;
         int statusIconY = topPos + 4;
         List<String> missingPatternItems = getMissingPatternItems();
 
@@ -202,9 +226,9 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             int red = (int) (255 * pulse);
             int errorColor = 0xFF000000 | (red << 16) | 0x2222;
 
-            guiGraphics.fill(statusIconX, statusIconY, statusIconX + 12, statusIconY + 12, 0xFF000000);
-            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + 11, statusIconY + 11, errorColor);
-            guiGraphics.drawCenteredString(font, "!", statusIconX + 6, statusIconY + 2, 0xFFFFFF);
+            guiGraphics.fill(statusIconX, statusIconY, statusIconX + STATUS_ICON_SIZE, statusIconY + STATUS_ICON_SIZE, GuiColors.STATUS_ICON_BORDER);
+            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + STATUS_ICON_SIZE - 1, statusIconY + STATUS_ICON_SIZE - 1, errorColor);
+            guiGraphics.drawCenteredString(font, "!", statusIconX + STATUS_ICON_SIZE / 2, statusIconY + 2, GuiColors.TEXT_PRIMARY);
         } else if (!missingPatternItems.isEmpty()) {
             // Warning icon (yellow) - missing patterns
             long time = System.currentTimeMillis();
@@ -212,13 +236,13 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             int yellow = (int) (255 * pulse);
             int warningColor = 0xFF000000 | (yellow << 16) | (yellow << 8);
 
-            guiGraphics.fill(statusIconX, statusIconY, statusIconX + 12, statusIconY + 12, 0xFF000000);
-            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + 11, statusIconY + 11, warningColor);
-            guiGraphics.drawCenteredString(font, "!", statusIconX + 6, statusIconY + 2, 0x000000);
+            guiGraphics.fill(statusIconX, statusIconY, statusIconX + STATUS_ICON_SIZE, statusIconY + STATUS_ICON_SIZE, GuiColors.STATUS_ICON_BORDER);
+            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + STATUS_ICON_SIZE - 1, statusIconY + STATUS_ICON_SIZE - 1, warningColor);
+            guiGraphics.drawCenteredString(font, "!", statusIconX + STATUS_ICON_SIZE / 2, statusIconY + 2, 0x000000);
         } else {
             // Success icon (green) - all good
-            guiGraphics.fill(statusIconX, statusIconY, statusIconX + 12, statusIconY + 12, 0xFF000000);
-            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + 11, statusIconY + 11, 0xFF55FF55);
+            guiGraphics.fill(statusIconX, statusIconY, statusIconX + STATUS_ICON_SIZE, statusIconY + STATUS_ICON_SIZE, GuiColors.STATUS_ICON_BORDER);
+            guiGraphics.fill(statusIconX + 1, statusIconY + 1, statusIconX + STATUS_ICON_SIZE - 1, statusIconY + STATUS_ICON_SIZE - 1, GuiColors.STATUS_SUCCESS);
         }
 
         // Empty list message
@@ -226,16 +250,16 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             guiGraphics.drawCenteredString(font,
                     Component.translatable("ae2_autorequester.gui.no_rules"),
                     leftPos + RULE_LIST_X + RULE_LIST_WIDTH / 2,
-                    topPos + RULE_LIST_Y + (MAX_VISIBLE_RULES * RULE_ENTRY_HEIGHT) / 2,
-                    0x888888);
+                    topPos + RULE_LIST_Y + RULE_LIST_HEIGHT / 2,
+                    GuiColors.TEXT_SECONDARY);
         }
     }
 
     private void renderRuleEntry(GuiGraphics guiGraphics, CraftingRule rule, int x, int y) {
         // Status icon (colored square) - green for enabled, red for disabled
-        int statusColor = rule.isEnabled() ? 0x55FF55 : 0xFF5555;
-        guiGraphics.fill(x, y + 4, x + 12, y + 16, 0xFF000000);
-        guiGraphics.fill(x + 1, y + 5, x + 11, y + 15, 0xFF000000 | statusColor);
+        int statusColor = rule.isEnabled() ? GuiColors.STATUS_SUCCESS : GuiColors.STATUS_ERROR;
+        guiGraphics.fill(x, y + 4, x + 12, y + 16, GuiColors.STATUS_ICON_BORDER);
+        guiGraphics.fill(x + 1, y + 5, x + 11, y + 15, statusColor);
 
         // Target item icon
         if (rule.getTargetItem() != null && !rule.getTargetItemStack().isEmpty()) {
@@ -247,26 +271,26 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         if (displayName.length() > 20) {
             displayName = displayName.substring(0, 17) + "...";
         }
-        int textColor = rule.isEnabled() ? 0xFFFFFF : 0x888888;
+        int textColor = rule.isEnabled() ? GuiColors.TEXT_PRIMARY : GuiColors.TEXT_SECONDARY;
         guiGraphics.drawString(font, displayName, x + 36, y + 2, textColor);
 
         // Condition count and batch size
         String info = rule.getConditions().size() + " cond. | ×" + rule.getBatchSize();
-        guiGraphics.drawString(font, info, x + 36, y + 12, 0x888888);
+        guiGraphics.drawString(font, info, x + 36, y + 12, GuiColors.TEXT_SECONDARY);
 
-        // Enable/disable indicator - colored box with text
-        int toggleX = x + RULE_LIST_WIDTH - 32;
+        // Enable/disable toggle - colored box with text
+        int toggleX = x + TOGGLE_X_OFFSET;
         int toggleY = y + 4;
-        int toggleColor = rule.isEnabled() ? 0xFF55FF55 : 0xFF555555;
-        guiGraphics.fill(toggleX, toggleY, toggleX + 28, toggleY + 14, 0xFF000000);
-        guiGraphics.fill(toggleX + 1, toggleY + 1, toggleX + 27, toggleY + 13, toggleColor);
+        int toggleColor = rule.isEnabled() ? GuiColors.STATUS_SUCCESS : GuiColors.STATUS_DISABLED;
+        guiGraphics.fill(toggleX, toggleY, toggleX + TOGGLE_WIDTH, toggleY + TOGGLE_HEIGHT, GuiColors.STATUS_ICON_BORDER);
+        guiGraphics.fill(toggleX + 1, toggleY + 1, toggleX + TOGGLE_WIDTH - 1, toggleY + TOGGLE_HEIGHT - 1, toggleColor);
         String enableText = rule.isEnabled() ? "ON" : "OFF";
-        guiGraphics.drawCenteredString(font, enableText, toggleX + 14, toggleY + 3, 0xFFFFFF);
+        guiGraphics.drawCenteredString(font, enableText, toggleX + TOGGLE_WIDTH / 2, toggleY + 3, GuiColors.TEXT_PRIMARY);
     }
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawString(font, title, 8, 6, 0xFFFFFF);
+        guiGraphics.drawString(font, title, PADDING, 6, GuiColors.TEXT_PRIMARY);
     }
 
     @Override
@@ -296,9 +320,9 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
         }
 
         // Status icon tooltip - Priority: error > warning > success
-        int statusIconX = leftPos + imageWidth - 20;
+        int statusIconX = leftPos + imageWidth - STATUS_ICON_MARGIN - STATUS_ICON_SIZE;
         int statusIconY = topPos + 4;
-        if (mouseX >= statusIconX && mouseX < statusIconX + 12 && mouseY >= statusIconY && mouseY < statusIconY + 12) {
+        if (mouseX >= statusIconX && mouseX < statusIconX + STATUS_ICON_SIZE && mouseY >= statusIconY && mouseY < statusIconY + STATUS_ICON_SIZE) {
             List<String> missingPatternItems = getMissingPatternItems();
 
             if (!menu.isNetworkConnected()) {
@@ -338,11 +362,9 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int listHeight = MAX_VISIBLE_RULES * RULE_ENTRY_HEIGHT;
-
         // Scrollbar click
         if (mouseX >= leftPos + SCROLLBAR_X && mouseX < leftPos + SCROLLBAR_X + SCROLLBAR_WIDTH &&
-                mouseY >= topPos + RULE_LIST_Y && mouseY < topPos + RULE_LIST_Y + listHeight) {
+                mouseY >= topPos + RULE_LIST_Y && mouseY < topPos + RULE_LIST_Y + RULE_LIST_HEIGHT) {
             isDraggingScrollbar = true;
             updateScrollFromMouse(mouseY);
             return true;
@@ -350,7 +372,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
 
         // Check if clicked on rule list
         if (mouseX >= leftPos + RULE_LIST_X && mouseX < leftPos + RULE_LIST_X + RULE_LIST_WIDTH &&
-                mouseY >= topPos + RULE_LIST_Y && mouseY < topPos + RULE_LIST_Y + listHeight) {
+                mouseY >= topPos + RULE_LIST_Y && mouseY < topPos + RULE_LIST_Y + RULE_LIST_HEIGHT) {
 
             int relativeY = (int) mouseY - (topPos + RULE_LIST_Y);
             int clickedIndex = relativeY / RULE_ENTRY_HEIGHT + scrollOffset;
@@ -358,7 +380,7 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             if (clickedIndex < menu.getRules().size()) {
                 // Check for enable/disable toggle FIRST (right side of entry)
                 int localX = (int) mouseX - leftPos - RULE_LIST_X - 2;
-                if (localX >= RULE_LIST_WIDTH - 35) {
+                if (localX >= RULE_LIST_WIDTH - TOGGLE_CLICK_THRESHOLD) {
                     // Toggle enabled state - don't trigger double-click
                     selectedRuleIndex = clickedIndex;
                     CraftingRule rule = menu.getRules().get(clickedIndex);
@@ -404,9 +426,8 @@ public class AutorequesterScreen extends AbstractContainerScreen<AutorequesterMe
             return;
         }
 
-        int listHeight = MAX_VISIBLE_RULES * RULE_ENTRY_HEIGHT;
         double relativeY = mouseY - (topPos + RULE_LIST_Y);
-        double ratio = Math.max(0, Math.min(1, relativeY / listHeight));
+        double ratio = Math.max(0, Math.min(1, relativeY / RULE_LIST_HEIGHT));
         int maxScroll = rules.size() - MAX_VISIBLE_RULES;
         scrollOffset = (int) (ratio * maxScroll);
     }

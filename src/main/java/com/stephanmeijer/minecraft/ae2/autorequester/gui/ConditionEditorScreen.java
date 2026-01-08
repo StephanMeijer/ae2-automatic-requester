@@ -37,18 +37,22 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
     private static final int BUTTON_HEIGHT = 20;
     private static final int ADJUSTMENT_BUTTON_WIDTH = 45;
     private static final int ADJUSTMENT_BUTTON_LARGE_WIDTH = 50;
-    private static final int ADJUSTMENT_BUTTON_SPACING = 50;
+    private static final int ADJUSTMENT_BUTTON_STRIDE = 50; // Distance from one button start to the next
     private static final int ITEM_SLOT_SIZE = 20;
     private static final int OPERATOR_BUTTON_WIDTH = 30;
     private static final int OPERATOR_BUTTON_X = PADDING + ITEM_SLOT_SIZE + 4;
     private static final int THRESHOLD_FIELD_X = OPERATOR_BUTTON_X + OPERATOR_BUTTON_WIDTH + 4;
     private static final int CONFIRM_CANCEL_BUTTON_SIZE = 20;
+    private static final int CONFIRM_CANCEL_BUTTON_SPACING = 4;
 
     // Row positions
     private static final int ROW_GAP = 6;
     private static final int PLUS_ROW_Y_OFFSET = 28;
     private static final int MAIN_ROW_Y_OFFSET = PLUS_ROW_Y_OFFSET + BUTTON_HEIGHT + ROW_GAP;
     private static final int BOTTOM_ROW_Y_OFFSET = GUI_HEIGHT - 28;
+
+    // Derived constants
+    private static final int CONTENT_RIGHT_EDGE = PADDING + ADJUSTMENT_BUTTON_STRIDE * 3 + ADJUSTMENT_BUTTON_LARGE_WIDTH;
 
     // ==================== Static Context for Screen Opening ====================
 
@@ -110,18 +114,18 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
         // Load from context
         loadFromContext();
 
-        int rightEdge = leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING * 3 + ADJUSTMENT_BUTTON_LARGE_WIDTH;
+        int rightEdge = leftPos + CONTENT_RIGHT_EDGE;
 
         // Row 1: + adjustment buttons
         int plusY = topPos + PLUS_ROW_Y_OFFSET;
         addRenderableWidget(Button.builder(Component.literal("+1"), b -> adjustThreshold(1))
                 .bounds(leftPos + PADDING, plusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
         addRenderableWidget(Button.builder(Component.literal("+10"), b -> adjustThreshold(10))
-                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING, plusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_STRIDE, plusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
         addRenderableWidget(Button.builder(Component.literal("+100"), b -> adjustThreshold(100))
-                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING * 2, plusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_STRIDE * 2, plusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
         addRenderableWidget(Button.builder(Component.literal("+1000"), b -> adjustThreshold(1000))
-                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING * 3, plusY, ADJUSTMENT_BUTTON_LARGE_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_STRIDE * 3, plusY, ADJUSTMENT_BUTTON_LARGE_WIDTH, BUTTON_HEIGHT).build());
 
         // Row 2: Operator button, Threshold field (item slot drawn manually)
         int mainRowY = topPos + MAIN_ROW_Y_OFFSET;
@@ -151,18 +155,17 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
         addRenderableWidget(Button.builder(Component.literal("-1"), b -> adjustThreshold(-1))
                 .bounds(leftPos + PADDING, minusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
         addRenderableWidget(Button.builder(Component.literal("-10"), b -> adjustThreshold(-10))
-                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING, minusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_STRIDE, minusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
         addRenderableWidget(Button.builder(Component.literal("-100"), b -> adjustThreshold(-100))
-                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING * 2, minusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_STRIDE * 2, minusY, ADJUSTMENT_BUTTON_WIDTH, BUTTON_HEIGHT).build());
         addRenderableWidget(Button.builder(Component.literal("-1000"), b -> adjustThreshold(-1000))
-                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_SPACING * 3, minusY, ADJUSTMENT_BUTTON_LARGE_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(leftPos + PADDING + ADJUSTMENT_BUTTON_STRIDE * 3, minusY, ADJUSTMENT_BUTTON_LARGE_WIDTH, BUTTON_HEIGHT).build());
 
         // Bottom row: Confirm and Cancel buttons
         int bottomY = topPos + BOTTOM_ROW_Y_OFFSET;
-        int buttonSpacing = 4;
 
         saveButton = addRenderableWidget(Button.builder(Component.literal("\u2713"), b -> onSaveClicked())
-                .bounds(leftPos + GUI_WIDTH - PADDING - CONFIRM_CANCEL_BUTTON_SIZE - buttonSpacing - CONFIRM_CANCEL_BUTTON_SIZE,
+                .bounds(leftPos + GUI_WIDTH - PADDING - CONFIRM_CANCEL_BUTTON_SIZE - CONFIRM_CANCEL_BUTTON_SPACING - CONFIRM_CANCEL_BUTTON_SIZE,
                         bottomY, CONFIRM_CANCEL_BUTTON_SIZE, CONFIRM_CANCEL_BUTTON_SIZE)
                 .tooltip(Tooltip.create(Component.translatable("ae2_autorequester.gui.save")))
                 .build());
@@ -232,18 +235,18 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         // Draw panel background
-        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xFF8B8B8B);
-        guiGraphics.fill(leftPos + 2, topPos + 2, leftPos + imageWidth - 2, topPos + imageHeight - 2, 0xFF373737);
+        guiGraphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, GuiColors.BACKGROUND_BORDER);
+        guiGraphics.fill(leftPos + 2, topPos + 2, leftPos + imageWidth - 2, topPos + imageHeight - 2, GuiColors.BACKGROUND_FILL);
 
         // Draw title bar
-        guiGraphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + 16, 0xFF1E1E1E);
+        guiGraphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + 16, GuiColors.TITLE_BAR);
 
         // Item slot (Row 2) - light gray background when item is set
         int mainRowY = topPos + MAIN_ROW_Y_OFFSET;
         int itemSlotX = leftPos + PADDING;
-        int slotInnerColor = currentItem.isEmpty() ? 0xFF373737 : 0xFF6A6A6A;
-        guiGraphics.fill(itemSlotX, mainRowY, itemSlotX + ITEM_SLOT_SIZE, mainRowY + BUTTON_HEIGHT, 0xFF1E1E1E);
-        guiGraphics.fill(itemSlotX + 1, mainRowY + 1, itemSlotX + ITEM_SLOT_SIZE - 1, mainRowY + BUTTON_HEIGHT - 1, slotInnerColor);
+        int slotInnerColor = currentItem.isEmpty() ? GuiColors.SLOT_EMPTY : GuiColors.SLOT_FILLED;
+        guiGraphics.fill(itemSlotX, mainRowY, itemSlotX + ITEM_SLOT_SIZE, mainRowY + ITEM_SLOT_SIZE, GuiColors.SLOT_BORDER);
+        guiGraphics.fill(itemSlotX + 1, mainRowY + 1, itemSlotX + ITEM_SLOT_SIZE - 1, mainRowY + ITEM_SLOT_SIZE - 1, slotInnerColor);
 
         if (!currentItem.isEmpty()) {
             guiGraphics.renderItem(currentItem, itemSlotX + 2, mainRowY + 2);
@@ -252,7 +255,7 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawCenteredString(font, title, imageWidth / 2, 6, 0xFFFFFF);
+        guiGraphics.drawCenteredString(font, title, imageWidth / 2, 6, GuiColors.TEXT_PRIMARY);
     }
 
     @Override
@@ -264,7 +267,7 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
 
         // Item slot tooltip
         if (mouseX >= itemSlotX && mouseX < itemSlotX + ITEM_SLOT_SIZE &&
-                mouseY >= mainRowY && mouseY < mainRowY + BUTTON_HEIGHT) {
+                mouseY >= mainRowY && mouseY < mainRowY + ITEM_SLOT_SIZE) {
             if (!currentItem.isEmpty()) {
                 guiGraphics.renderTooltip(font, currentItem, mouseX, mouseY);
             } else {
@@ -286,7 +289,7 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
         int mainRowY = topPos + MAIN_ROW_Y_OFFSET;
         int itemSlotX = leftPos + PADDING;
         if (mouseX >= itemSlotX && mouseX < itemSlotX + ITEM_SLOT_SIZE &&
-                mouseY >= mainRowY && mouseY < mainRowY + BUTTON_HEIGHT) {
+                mouseY >= mainRowY && mouseY < mainRowY + ITEM_SLOT_SIZE) {
             ItemStack carried = minecraft.player.containerMenu.getCarried();
             if (!carried.isEmpty()) {
                 currentItem = carried.copyWithCount(1);
@@ -314,7 +317,7 @@ public class ConditionEditorScreen extends AbstractContainerScreen<ConditionEdit
     @Override
     public Rect2i getGhostItemSlotBounds() {
         int mainRowY = topPos + MAIN_ROW_Y_OFFSET;
-        return new Rect2i(leftPos + PADDING, mainRowY, ITEM_SLOT_SIZE, BUTTON_HEIGHT);
+        return new Rect2i(leftPos + PADDING, mainRowY, ITEM_SLOT_SIZE, ITEM_SLOT_SIZE);
     }
 
     @Override
