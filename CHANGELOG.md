@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1-alpha.2](https://github.com/StephanMeijer/ae2-automatic-requester/compare/v1.1.0-alpha.2...v1.1.1-alpha.2) (2026-01-08)
+
+
+### Bug Fixes
+
+* treat compiler warnings as errors and fix all warnings ([a0ec165](https://github.com/StephanMeijer/ae2-automatic-requester/commit/a0ec16560ef64ea17bd5d8263a1bc13341ccc73f))
+
 ## [1.1.0-alpha.2](https://github.com/StephanMeijer/ae2-automatic-requester/compare/v1.0.0-alpha.2...v1.1.0-alpha.2) (2026-01-08)
 
 
